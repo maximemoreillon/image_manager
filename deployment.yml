@@ -30,7 +30,7 @@ spec:
           claimName: image-manager
       containers:
       - name: image-manager
-        image: 172.16.98.151:5000/image-manager
+        image: 192.168.1.2:5000/image-manager
         imagePullPolicy: Always
         ports:
         - containerPort: 7028
