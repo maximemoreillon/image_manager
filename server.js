@@ -49,10 +49,10 @@ watch.on('add', absolute_file_path => {
   var image_extensions = [ '.jpg', '.jpeg', '.png', '.bmp', '.svg', '.gif', '.tiff']
   if( !image_extensions.includes(extension)) return console.log(`[Chokidar] ${relative_file_path} is not an image`)
 
-  // get file size
-  var stats = fs.statSync(absolute_file_path)
+
 
   console.log(`[Chokidar] Found new file: ${file_name}`)
+
 
   setTimeout(() => {
 
@@ -61,7 +61,7 @@ watch.on('add', absolute_file_path => {
       if(result.length === 0) {
         const image = new Image({
           path: relative_file_path,
-          size: stats['size']
+          size: fs.statSync(absolute_file_path)['size']
         });
 
         image.save()
