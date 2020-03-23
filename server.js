@@ -36,19 +36,19 @@ authorization_middleware.secret = secrets.jwt_secret
 var app = express();
 
 // Express configuration
-//app.use(history())
 app.use(bodyParser.json())
 app.use(express.static(path.join(__dirname, 'dist')))
 app.use(cors())
-//app.use(authorization_middleware.middleware)
+app.use(authorization_middleware.middleware)
+app.use(history({
+  // Ignore routes for connect-history-api-fallback
+  rewrites: [
+    { from: '/image', to: '/image'},
+    { from: '/list', to: '/list'},
+    { from: '/drop', to: '/drop'},
+  ]
+}));
 
-app.get('/', (req,res) => {
-  res.send('Image manager')
-})
-
-app.get('/form', (req,res) => {
-  res.sendFile(path.join(__dirname, 'upload_form.html'))
-})
 
 app.post('/upload', (req, res) => {
 
