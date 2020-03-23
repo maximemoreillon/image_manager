@@ -30,11 +30,8 @@ mongoose.connect(secrets.mongodb_url + DB_name, {
   useFindAndModify: false,
 });
 
-
-
 // configure the authorization middleware
 authorization_middleware.secret = secrets.jwt_secret
-
 
 var app = express();
 
