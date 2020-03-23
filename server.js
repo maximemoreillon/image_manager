@@ -106,6 +106,7 @@ app.use(history({
 }));
 app.use(bodyParser.json())
 app.use(express.static(path.join(__dirname, 'dist')))
+app.use(express.static(uploads_directory_path))
 app.use(cors())
 
 
@@ -195,7 +196,9 @@ app.get('/image', (req,res) => {
       return res.status(404).send(`Image not found in DB`)
     }
 
-    res.sendFile(path.join(uploads_directory_path, image.path))
+    // if using file path, sends binary when using K8s
+    //res.sendFile(path.join(uploads_directory_path, image.path))
+    res.redirect(`/${image.path}`)
 
     // save referer
     var referer_url = req.get('Referrer')
