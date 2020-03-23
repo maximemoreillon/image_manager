@@ -21,8 +21,8 @@ const Image = require('./models/image')
 const port = 7028;
 const DB_name = 'images'
 
-//const uploads_directory_path = path.join(__dirname, 'uploads')
-const uploads_directory_path = path.join("/usr/share/pv", 'image_manager_uploads')
+const uploads_directory_path = path.join(__dirname, 'uploads')
+//const uploads_directory_path = path.join("/usr/share/pv", 'image_manager_uploads')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
   useNewUrlParser: true,
@@ -102,6 +102,7 @@ app.post('/upload', (req, res) => {
         res.send({
           _id: image._id,
           size: image.size,
+          upload_date: new Date(),
         })
       })
       .catch( err => {
@@ -140,10 +141,27 @@ app.get('/image', (req,res) => {
     res.sendFile(path.join(uploads_directory_path, image.path))
 
     // save referer
-    var referer = req.get('Referrer')
-    if(referer) {
-      if(!image.referers.includes(referer)){
-        image.referers.push(referer)
+    var referer_url = req.get('Referrer')
+    if(referer_url) {
+
+      let found_referer = image.referers.find( referer => {
+        return referer.url === referer_url
+      })
+
+      if(found_referer){
+        found_referer.last_request = new Date()
+
+        image.save()
+        .then( () => console.log('Referer updated'))
+        .catch(err => console.log(`Error saving referer: ${err}`))
+
+      }
+      else {
+        image.referers.push({
+          url: referer_url,
+          last_request: new Date()
+        })
+
         image.save()
         .then( () => console.log('Referer saved'))
         .catch(err => console.log(`Error saving referer: ${err}`))
