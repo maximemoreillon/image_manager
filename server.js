@@ -61,19 +61,33 @@ watch.on('add', absolute_file_path => {
       if(result.length === 0) {
         const image = new Image({
           path: relative_file_path,
-          size: stats.size
+          size: stats['size']
         });
 
         image.save()
         .then(() => { console.log(`[Chokidar] Image ${relative_file_path} successfully registered `) })
-        .catch( err => { console.log(`Error saving to DB: ${err}`) })
+        .catch( err => { console.log(`[Chokidar] Error saving to DB: ${err}`) })
       }
-      else {
-        console.log(`[Chokidar] Image ${relative_file_path} was already registered `)
-      }
+      else  console.log(`[Chokidar] Image ${relative_file_path} was already registered `)
     })
   }, 3000)
 })
+
+watch.on('unlink', absolute_file_path => {
+  var file_name = path.basename(absolute_file_path)
+  var relative_file_path = file_name
+
+  console.log(`[Chokidar] File got removed: ${file_name}`)
+
+  setTimeout(() => {
+    Image.findOneAndDelete({path: relative_file_path}, (err, result) => {
+      if(err) return console.log(`[Chokidar] Error removing from DB: ${err}`)
+      if(result) console.log(`[Chokidar] Removed ${result.path} from DB`)
+    })
+
+  }, 3000)
+
+});
 
 
 
