@@ -61,7 +61,8 @@ watch.on('add', absolute_file_path => {
       if(result.length === 0) {
         const image = new Image({
           path: relative_file_path,
-          size: fs.statSync(absolute_file_path)['size']
+          size: fs.statSync(absolute_file_path)['size'],
+          upload_date: new Date()
         });
 
         image.save()
@@ -101,7 +102,6 @@ app.use(history({
   rewrites: [
     { from: '/image', to: '/image'},
     { from: '/list', to: '/list'},
-    { from: '/drop', to: '/drop'},
   ]
 }));
 app.use(bodyParser.json())
@@ -224,6 +224,34 @@ app.get('/image', (req,res) => {
         .catch(err => console.log(`Error saving referer: ${err}`))
       }
     }
+
+  });
+
+})
+
+app.post('/image_details', (req,res) => {
+
+  // Check validity of request
+  if(!('id' in req.body)) {
+    console.log(`ID not present in request`)
+    return res.status(400).send(`ID not present in request`)
+  }
+
+  Image.findById(req.body.id, (err, image) => {
+
+    // handle errors
+    if (err) {
+      console.log(`Error retriving document from DB: ${err}`)
+      return res.status(500).send(`Error retriving document from DB: ${err}`)
+    }
+
+    // Check if image actually exists
+    if(!image) {
+      console.log(`Image not found in DB`)
+      return res.status(404).send(`Image not found in DB`)
+    }
+
+    res.send(image)
 
   });
 
