@@ -8,7 +8,7 @@ const mongoose = require("mongoose")
 const formidable = require('formidable')
 const mv = require('mv')
 const { v4: uuidv4 } = require('uuid');
-
+const chokidar = require('chokidar');
 // personal modules
 const authorization_middleware = require('@moreillon/authorization_middleware')
 
@@ -21,8 +21,9 @@ const Image = require('./models/image')
 const port = 7028;
 const DB_name = 'images'
 
-//const uploads_directory_path = path.join(__dirname, 'uploads')
-const uploads_directory_path = "/usr/share/pv"
+const uploads_directory_path = path.join(__dirname, 'uploads')
+//const uploads_directory_path = "/usr/share/pv"
+const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
   useNewUrlParser: true,
@@ -32,6 +33,41 @@ mongoose.connect(secrets.mongodb_url + DB_name, {
 
 // configure the authorization middleware
 authorization_middleware.secret = secrets.jwt_secret
+
+
+// Watch system to allow images to bedropped directly into the uploads directory
+const watch = chokidar.watch(uploads_directory_path, {depth: 0})
+
+watch.on('add', absolute_file_path => {
+
+  var file_name = path.basename(absolute_file_path)
+  var relative_file_path = file_name
+
+  console.log(`[Chokidar] Found new file: ${file_name}`)
+
+  setTimeout(() => {
+
+    Image.find({path: relative_file_path}, (err, result) => {
+      if(err) return console.log(`Error getting images from DB: ${err}`)
+      if(result.length === 0) {
+        const image = new Image({
+          path: relative_file_path,
+        });
+
+        image.save()
+        .then(() => { console.log(`[Chokidar] Image ${relative_file_path} successfully registered `) })
+        .catch( err => { console.log(`Error saving to DB: ${err}`) })
+      }
+      else {
+        console.log(`[Chokidar] Image ${relative_file_path} was already registered `)
+      }
+    })
+  }, 3000)
+})
+
+
+
+
 
 var app = express();
 
@@ -182,6 +218,42 @@ app.get('/list',authorization_middleware.middleware, (req,res) => {
 })
 
 
+app.post('/delete',authorization_middleware.middleware, (req,res) => {
+
+  if(!('id' in req.body)) {
+    console.log(`ID not present in request`)
+    return res.status(400).send(`ID not present in request`)
+  }
+
+  Image.findById(req.body.id, (err, image) => {
+
+    var original_path = path.join(uploads_directory_path, image.path)
+    var original_name = path.basename(image.path)
+    var destination_path = path.join(trash_directory_path, original_name)
+
+    mv(original_path, destination_path , {mkdirp: true}, (err) => {
+      if (err) {
+        console.log(`Error moving file to trash: ${err}`)
+        return res.status(500).send(`Error moving file to trash: ${err}`)
+      }
+
+      image.remove( (err, result) => {
+        if (err) {
+          console.log(`Error removing document from DB: ${err}`)
+          return res.status(500).send(`Error removing document from DB: ${err}`)
+        }
+
+        console.log(`Successfully deleted ${original_name}`)
+        res.send(`Successfully deleted ${original_name}`)
+      })
+
+    });
+
+
+  })
+
+})
+
 app.post('/drop',authorization_middleware.middleware, (req,res) => {
 
   Image.collection.drop()
@@ -189,6 +261,7 @@ app.post('/drop',authorization_middleware.middleware, (req,res) => {
   console.log('Collection dropped')
 
 })
+
 
 
 // Start server
