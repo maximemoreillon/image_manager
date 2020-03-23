@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-manager
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-manager
+  template:
+    metadata:
+      labels:
+        app: image-manager
+    spec:
+      volumes:
+      - name: image-manager
+        persistentVolumeClaim:
+          claimName: image-manager
+      containers:
+      - name: image-manager
+        image: 172.16.98.151:5000/image-manager
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 7028
+        volumeMounts:
+        - mountPath: "/usr/share/pv"
+          name: image-manager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: image-manager
+  name: image-manager
+spec:
+  ports:
+  - port: 7028
+    nodePort: 30028
+  selector:
+    app: image-manager
+  type: LoadBalancer
