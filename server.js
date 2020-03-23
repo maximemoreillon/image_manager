@@ -21,8 +21,8 @@ const Image = require('./models/image')
 const port = 7028;
 const DB_name = 'images'
 
-const uploads_directory_path = path.join(__dirname, 'uploads')
-//const uploads_directory_path = path.join("/usr/share/pv", 'image_manager_uploads')
+//const uploads_directory_path = path.join(__dirname, 'uploads')
+const uploads_directory_path = path.join("/usr/share/pv", 'image_manager_uploads')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
   useNewUrlParser: true,
