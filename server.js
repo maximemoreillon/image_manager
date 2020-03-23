@@ -39,7 +39,7 @@ var app = express();
 app.use(bodyParser.json())
 app.use(express.static(path.join(__dirname, 'dist')))
 app.use(cors())
-app.use(authorization_middleware.middleware)
+//app.use(authorization_middleware.middleware)
 app.use(history({
   // Ignore routes for connect-history-api-fallback
   rewrites: [
@@ -50,7 +50,7 @@ app.use(history({
 }));
 
 
-app.post('/upload', (req, res) => {
+app.post('/upload',authorization_middleware.middleware, (req, res) => {
 
   // Parse form using formidable
   var form = new formidable.IncomingForm();
@@ -170,7 +170,7 @@ app.get('/image', (req,res) => {
 })
 
 
-app.get('/list', (req,res) => {
+app.get('/list',authorization_middleware.middleware, (req,res) => {
 
   Image.find({},(err, docs) => {
     if (err) {
@@ -182,7 +182,7 @@ app.get('/list', (req,res) => {
 })
 
 
-app.get('/drop', (req,res) => {
+app.post('/drop',authorization_middleware.middleware, (req,res) => {
 
   Image.collection.drop()
   res.send('Collection dropped')
