@@ -96,10 +96,6 @@ watch.on('unlink', absolute_file_path => {
 var app = express();
 
 // Express configuration
-app.use(bodyParser.json())
-app.use(express.static(path.join(__dirname, 'dist')))
-app.use(cors())
-//app.use(authorization_middleware.middleware)
 app.use(history({
   // Ignore routes for connect-history-api-fallback
   rewrites: [
@@ -108,6 +104,10 @@ app.use(history({
     { from: '/drop', to: '/drop'},
   ]
 }));
+app.use(bodyParser.json())
+app.use(express.static(path.join(__dirname, 'dist')))
+app.use(cors())
+
 
 
 app.post('/upload',authorization_middleware.middleware, (req, res) => {
