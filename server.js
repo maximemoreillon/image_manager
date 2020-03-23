@@ -21,8 +21,8 @@ const Image = require('./models/image')
 const port = 7028;
 const DB_name = 'images'
 
-const uploads_directory_path = path.join(__dirname, 'uploads')
-//const uploads_directory_path = "/usr/share/pv"
+//const uploads_directory_path = path.join(__dirname, 'uploads')
+const uploads_directory_path = "/usr/share/pv"
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
