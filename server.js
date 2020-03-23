@@ -9,6 +9,7 @@ const formidable = require('formidable')
 const mv = require('mv')
 const { v4: uuidv4 } = require('uuid');
 const chokidar = require('chokidar');
+const fs = require('fs')
 // personal modules
 const authorization_middleware = require('@moreillon/authorization_middleware')
 
@@ -21,8 +22,8 @@ const Image = require('./models/image')
 const port = 7028;
 const DB_name = 'images'
 
-//const uploads_directory_path = path.join(__dirname, 'uploads')
-const uploads_directory_path = "/usr/share/pv"
+const uploads_directory_path = path.join(__dirname, 'uploads')
+//const uploads_directory_path = "/usr/share/pv"
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
@@ -43,6 +44,14 @@ watch.on('add', absolute_file_path => {
   var file_name = path.basename(absolute_file_path)
   var relative_file_path = file_name
 
+  // Check extension
+  var extension = path.extname(absolute_file_path)
+  var image_extensions = [ '.jpg', '.jpeg', '.png', '.bmp', '.svg', '.gif', '.tiff']
+  if( !image_extensions.includes(extension)) return console.log(`[Chokidar] ${relative_file_path} is not an image`)
+
+  // get file size
+  var stats = fs.statSync(absolute_file_path)
+
   console.log(`[Chokidar] Found new file: ${file_name}`)
 
   setTimeout(() => {
@@ -52,6 +61,7 @@ watch.on('add', absolute_file_path => {
       if(result.length === 0) {
         const image = new Image({
           path: relative_file_path,
+          size: stats.size
         });
 
         image.save()
@@ -232,10 +242,9 @@ app.post('/delete',authorization_middleware.middleware, (req,res) => {
     var destination_path = path.join(trash_directory_path, original_name)
 
     mv(original_path, destination_path , {mkdirp: true}, (err) => {
-      if (err) {
-        console.log(`Error moving file to trash: ${err}`)
-        return res.status(500).send(`Error moving file to trash: ${err}`)
-      }
+
+      // Even in case of error, remove from DB
+      if (err)  console.log(`Error moving file to trash: ${err}`)
 
       image.remove( (err, result) => {
         if (err) {
