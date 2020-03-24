@@ -22,8 +22,10 @@ const Image = require('./models/image')
 const port = 7028;
 const DB_name = 'images'
 
-//const uploads_directory_path = path.join(__dirname, 'uploads')
-const uploads_directory_path = "/usr/share/pv"
+var uploads_directory_path = undefined;
+if(process.env.DEVELOPMENT)  uploads_directory_path = path.join(__dirname, 'uploads')
+else uploads_directory_path = "/usr/share/pv"
+
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
@@ -196,7 +198,7 @@ app.get('/image', (req,res) => {
       return res.status(404).send(`Image not found in DB`)
     }
 
-    // if using file path, sends binary when using K8s
+    // if using file path, sends binary file when using K8s
     //res.sendFile(path.join(uploads_directory_path, image.path))
     res.redirect(`/${image.path}`)
 
@@ -262,7 +264,7 @@ app.post('/image_details', (req,res) => {
 
 
 app.get('/list',authorization_middleware.middleware, (req,res) => {
-
+  // List all uploads
   Image.find({},(err, docs) => {
     if (err) {
       console.log(`Error retriving documents from DB: ${err}`)
@@ -280,15 +282,17 @@ app.post('/delete',authorization_middleware.middleware, (req,res) => {
     return res.status(400).send(`ID not present in request`)
   }
 
+  // Find the image in the database
   Image.findById(req.body.id, (err, image) => {
 
+    // Move image to trash directory
     var original_path = path.join(uploads_directory_path, image.path)
     var original_name = path.basename(image.path)
     var destination_path = path.join(trash_directory_path, original_name)
 
     mv(original_path, destination_path , {mkdirp: true}, (err) => {
 
-      // Even in case of error, remove from DB
+      // Remove from DB regardless of errors
       if (err)  console.log(`Error moving file to trash: ${err}`)
 
       image.remove( (err, result) => {
