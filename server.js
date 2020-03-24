@@ -25,7 +25,6 @@ const DB_name = 'images'
 var uploads_directory_path = undefined;
 if(process.env.DEVELOPMENT)  uploads_directory_path = path.join(__dirname, 'uploads')
 else uploads_directory_path = "/usr/share/pv"
-
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
@@ -58,13 +57,23 @@ watch.on('add', absolute_file_path => {
 
   setTimeout(() => {
 
+    try {
+      var file_size = fs.statSync(absolute_file_path)['size']
+    } catch (e) {
+      return console.log(`[Chokidar] File seems not to exist anymore`)
+    }
+
+
     Image.find({path: relative_file_path}, (err, result) => {
       if(err) return console.log(`Error getting images from DB: ${err}`)
+
       if(result.length === 0) {
+        // If no result, means th eimage is not in the DB yet so register interval
+
         const image = new Image({
           path: relative_file_path,
-          size: fs.statSync(absolute_file_path)['size'],
-          upload_date: new Date()
+          size: file_size,
+          upload_date: new Date(),
         });
 
         image.save()
@@ -86,6 +95,7 @@ watch.on('unlink', absolute_file_path => {
     Image.findOneAndDelete({path: relative_file_path}, (err, result) => {
       if(err) return console.log(`[Chokidar] Error removing from DB: ${err}`)
       if(result) console.log(`[Chokidar] Removed ${result.path} from DB`)
+      else console.log(`[Chokidar] ${file_name} was already removed from DB`)
     })
 
   }, 3000)
@@ -154,6 +164,7 @@ app.post('/upload',authorization_middleware.middleware, (req, res) => {
       const image = new Image({
         path: path_relative_to_upload_dir,
         size: files[file_key].size,
+        upload_date: new Date(),
       });
 
       image.save()
