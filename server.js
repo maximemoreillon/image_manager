@@ -274,14 +274,23 @@ app.post('/image_details', (req,res) => {
 })
 
 
-app.get('/list',authorization_middleware.middleware, (req,res) => {
+app.post('/list',authorization_middleware.middleware, (req,res) => {
   // List all uploads
-  Image.find({},(err, docs) => {
+  Image.find({})
+  .sort({upload_date: -1})
+  .exec((err, docs) => {
+
+    // Error handling
     if (err) {
       console.log(`Error retriving documents from DB: ${err}`)
       return res.status(500).send(`Error retriving documents from DB: ${err}`)
     }
-    res.send(docs)
+
+    // Send the documents batch by batch ifspecified
+    if('start_index' in req.body && 'load_count' in req.body) {
+      res.send(docs.slice(req.body.start_index, req.body.start_index+req.body.load_count))
+    }
+    else res.send(docs)
   })
 })
 
