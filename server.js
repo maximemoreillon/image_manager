@@ -34,7 +34,7 @@ mongoose.connect(secrets.mongodb_url + DB_name, {
 });
 
 // configure the authorization middleware
-authorization_middleware.secret = secrets.jwt_secret
+authorization_middleware.authentication_api_url = secrets.authentication_api_url
 
 
 // Watch system to allow images to bedropped directly into the uploads directory
