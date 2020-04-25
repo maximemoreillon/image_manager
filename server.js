@@ -12,14 +12,17 @@ const chokidar = require('chokidar');
 const fs = require('fs')
 // personal modules
 const authorization_middleware = require('@moreillon/authorization_middleware')
+const dotenv = require('dotenv');
 
+dotenv.config();
 // local modules
 const secrets = require('./secrets')
 
 // Mongoose models
 const Image = require('./models/image')
 
-const port = 7028;
+var port = 80
+if(process.env.APP_PORT) port=process.env.APP_PORT
 const DB_name = 'images'
 
 var uploads_directory_path = undefined;
