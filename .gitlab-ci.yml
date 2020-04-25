@@ -7,7 +7,6 @@ variables:
   DOCKER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
   CERTIFICATE_DOMAIN: img.maximemoreillon.com
 
-
 containerization:
   stage: containerization
   script:
