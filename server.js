@@ -25,9 +25,15 @@ var port = 80
 if(process.env.APP_PORT) port=process.env.APP_PORT
 const DB_name = 'images'
 
+/*
 var uploads_directory_path = undefined;
 if(process.env.DEVELOPMENT)  uploads_directory_path = path.join(__dirname, 'uploads')
 else uploads_directory_path = "/usr/share/pv"
+*/
+
+var uploads_directory_path = "/usr/share/pv"
+
+
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
 mongoose.connect(secrets.mongodb_url + DB_name, {
