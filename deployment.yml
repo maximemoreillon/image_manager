@@ -24,16 +24,21 @@ spec:
       labels:
         app: ${APPLICATION_NAME}
     spec:
+      volumes:
+      - name: ${APPLICATION_NAME}
+        persistentVolumeClaim:
+          claimName: ${APPLICATION_NAME}
       containers:
       - name: ${APPLICATION_NAME}
         image: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         volumeMounts:
         - mountPath: "/usr/share/pv"
           name: ${APPLICATION_NAME}
       imagePullSecrets:
-      - name: registry-credentials
+      - name: registry-credentials # Credentials to pull image from registry
 ---
 apiVersion: v1
 kind: Service
