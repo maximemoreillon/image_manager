@@ -4,14 +4,15 @@ stages:
 
 variables:
   APPLICATION_NAME: image-manager
-  DOCKER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+  DOCKER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CERTIFICATE_DOMAIN: img.maximemoreillon.com
 
 containerization:
   stage: containerization
   script:
-    - cp ${SECRETS} ./secrets.js
-    - echo "${CONTAINER_REGISTRY_PASSWORD}" | docker login ${CONTAINER_REGISTRY} --username ${CONTAINER_REGISTRY_USERNAME} --password-stdin
+    # Docker hub login
+    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
+    # Build and push
     - docker build -t ${DOCKER_IMAGE} .
     - docker push ${DOCKER_IMAGE}
     - docker image rm ${DOCKER_IMAGE}

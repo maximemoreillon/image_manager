@@ -30,15 +30,16 @@ spec:
           claimName: ${APPLICATION_NAME}
       containers:
       - name: ${APPLICATION_NAME}
-        image: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+        image: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
         imagePullPolicy: Always
         ports:
         - containerPort: 80
         volumeMounts:
         - mountPath: "/usr/share/pv"
           name: ${APPLICATION_NAME}
-      imagePullSecrets:
-      - name: registry-credentials # Credentials to pull image from registry
+      # Credentials to pull image from registry
+      #imagePullSecrets:
+      #- name: registry-credentials
 ---
 apiVersion: v1
 kind: Service

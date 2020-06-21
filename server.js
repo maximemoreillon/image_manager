@@ -3,48 +3,33 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')
 const cors = require('cors')
-const history = require('connect-history-api-fallback')
 const mongoose = require("mongoose")
 const formidable = require('formidable')
 const mv = require('mv')
-const { v4: uuidv4 } = require('uuid');
-const chokidar = require('chokidar');
+const chokidar = require('chokidar')
 const fs = require('fs')
-// personal modules
-const authorization_middleware = require('@moreillon/authorization_middleware')
-const dotenv = require('dotenv');
+const dotenv = require('dotenv')
+const auth = require('@moreillon/authentication_middleware')
+const { v4: uuidv4 } = require('uuid')
 
 dotenv.config();
-// local modules
-const secrets = require('./secrets')
 
 // Mongoose models
+const DB_name = 'images'
 const Image = require('./models/image')
 
-var port = 80
-if(process.env.APP_PORT) port=process.env.APP_PORT
-const DB_name = 'images'
+const app_port = process.env.APP_PORT || 80
 
-/*
-var uploads_directory_path = undefined;
-if(process.env.DEVELOPMENT)  uploads_directory_path = path.join(__dirname, 'uploads')
-else uploads_directory_path = "/usr/share/pv"
-*/
 
-var uploads_directory_path = "/usr/share/pv"
-
+const uploads_directory_path = process.env.UPLOADS_DIRECTORY || "/usr/share/pv"
 
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
-mongoose.connect(secrets.mongodb_url + DB_name, {
+mongoose.connect(`${process.env.MONGODB_URL}/${DB_name}`, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false,
 });
-
-// configure the authorization middleware
-authorization_middleware.authentication_api_url = secrets.authentication_api_url
-
 
 // Watch system to allow images to bedropped directly into the uploads directory
 const watch = chokidar.watch(uploads_directory_path, {depth: 0})
@@ -114,25 +99,15 @@ watch.on('unlink', absolute_file_path => {
 
 
 
-
-var app = express();
-
 // Express configuration
-app.use(history({
-  // Ignore routes for connect-history-api-fallback
-  rewrites: [
-    { from: '/image', to: '/image'},
-    { from: '/list', to: '/list'},
-  ]
-}));
+const app = express()
 app.use(bodyParser.json())
-app.use(express.static(path.join(__dirname, 'dist')))
 app.use(express.static(uploads_directory_path))
 app.use(cors())
 
 
 
-app.post('/upload',authorization_middleware.middleware, (req, res) => {
+app.post('/image',auth.authenticate, (req, res) => {
 
   // Parse form using formidable
   var form = new formidable.IncomingForm();
@@ -254,65 +229,15 @@ app.get('/image', (req,res) => {
 
 })
 
-app.post('/image_details', (req,res) => {
+app.delete('/image',auth.authenticate, (req,res) => {
 
-  // Check validity of request
-  if(!('id' in req.body)) {
-    console.log(`ID not present in request`)
-    return res.status(400).send(`ID not present in request`)
-  }
-
-  Image.findById(req.body.id, (err, image) => {
-
-    // handle errors
-    if (err) {
-      console.log(`Error retriving document from DB: ${err}`)
-      return res.status(500).send(`Error retriving document from DB: ${err}`)
-    }
-
-    // Check if image actually exists
-    if(!image) {
-      console.log(`Image not found in DB`)
-      return res.status(404).send(`Image not found in DB`)
-    }
-
-    res.send(image)
-
-  });
-
-})
-
-
-app.post('/list',authorization_middleware.middleware, (req,res) => {
-  // List all uploads
-  Image.find({})
-  .sort({upload_date: -1})
-  .exec((err, docs) => {
-
-    // Error handling
-    if (err) {
-      console.log(`Error retriving documents from DB: ${err}`)
-      return res.status(500).send(`Error retriving documents from DB: ${err}`)
-    }
-
-    // Send the documents batch by batch ifspecified
-    if('start_index' in req.body && 'load_count' in req.body) {
-      res.send(docs.slice(req.body.start_index, req.body.start_index+req.body.load_count))
-    }
-    else res.send(docs)
-  })
-})
-
-
-app.post('/delete',authorization_middleware.middleware, (req,res) => {
-
-  if(!('id' in req.body)) {
+  if(!('id' in req.query)) {
     console.log(`ID not present in request`)
     return res.status(400).send(`ID not present in request`)
   }
 
   // Find the image in the database
-  Image.findById(req.body.id, (err, image) => {
+  Image.findById(req.query.id, (err, image) => {
 
     // Move image to trash directory
     var original_path = path.join(uploads_directory_path, image.path)
@@ -341,17 +266,62 @@ app.post('/delete',authorization_middleware.middleware, (req,res) => {
 
 })
 
-app.post('/drop',authorization_middleware.middleware, (req,res) => {
 
-  Image.collection.drop()
-  res.send('Collection dropped')
-  console.log('Collection dropped')
+app.get('/image_details', (req,res) => {
+
+  // Check validity of request
+  if(!('id' in req.query)) {
+    console.log(`ID not present in request`)
+    return res.status(400).send(`ID not present in request`)
+  }
+
+  Image.findById(req.query.id, (err, image) => {
+
+    // handle errors
+    if (err) {
+      console.log(`Error retriving document from DB: ${err}`)
+      return res.status(500).send(`Error retriving document from DB: ${err}`)
+    }
+
+    // Check if image actually exists
+    if(!image) {
+      console.log(`Image not found in DB`)
+      return res.status(404).send(`Image not found in DB`)
+    }
+
+    res.send(image)
+
+  });
 
 })
 
 
+app.get('/image_list',auth.authenticate, (req,res) => {
+  // List all uploads
+  Image.find({})
+  .sort({upload_date: -1})
+  .exec((err, docs) => {
+
+    // Error handling
+    if (err) {
+      console.log(`Error retriving documents from DB: ${err}`)
+      return res.status(500).send(`Error retriving documents from DB: ${err}`)
+    }
+
+    // Send the documents batch by batch ifspecified
+    if('start_index' in req.query && 'load_count' in req.query) {
+      res.send(docs.slice(req.query.start_index, req.query.start_index+req.query.load_count))
+    }
+    else res.send(docs)
+  })
+})
+
+
+
+
+
 
 // Start server
-app.listen(port, () => {
-  console.log(`Image manager listening on *:${port}`);
+app.listen(app_port, () => {
+  console.log(`Image manager listening on *:${app_port}`);
 });
