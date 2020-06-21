@@ -105,7 +105,13 @@ app.use(bodyParser.json())
 app.use(express.static(uploads_directory_path))
 app.use(cors())
 
-
+app.get('/', (req, res) => {
+  res.send(`
+    Image manager API, Maxime MOREILLON<br>
+    MongoDB URL: ${process.env.MONGODB_URL}<br>
+    Authentication API URL: ${process.env.AUTHENTICATION_API_URL}<br>
+    `)
+})
 
 app.post('/image',auth.authenticate, (req, res) => {
 
