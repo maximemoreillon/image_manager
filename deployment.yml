@@ -34,6 +34,10 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 80
+        # Get environment variables from k8s secret
+        envFrom:
+        - secretRef:
+           name: environment-variables
         volumeMounts:
         - mountPath: "/usr/share/pv"
           name: ${APPLICATION_NAME}
