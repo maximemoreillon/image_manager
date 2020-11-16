@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 var ImageSchema = new mongoose.Schema({
   // The path is relative to the uploads directory
@@ -8,6 +8,6 @@ var ImageSchema = new mongoose.Schema({
   referers: { type: Array, default: [] },
 });
 
-var Image= mongoose.model('Image', ImageSchema);
+var Image= mongoose.model('Image', ImageSchema)
 
 module.exports = Image
