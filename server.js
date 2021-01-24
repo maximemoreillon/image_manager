@@ -19,11 +19,13 @@ const app_port = process.env.APP_PORT || 80
 
 const uploads_directory_path = process.env.UPLOADS_DIRECTORY || "/usr/share/pv"
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
+
 exports.uploads_directory_path = uploads_directory_path
 exports.trash_directory_path = uploads_directory_path
 
 const Image = require('./models/image.js')
 const image_controller = require('./controllers/image.js')
+
 require('./file_watcher.js')
 
 
@@ -53,15 +55,15 @@ app.get('/', (req, res) => {
 })
 
 // REST API
-app.route('images')
+app.route('/images')
   .get(image_controller.get_image)
   .post(auth.authenticate, image_controller.upload_image)
 
-app.route('images/:id')
+app.route('/images/:id')
   .get(image_controller.get_image)
   .delete(auth.authenticate, image_controller.delete_image)
 
-app.route('images/:id/details')
+app.route('/images/:id/details')
   .get(image_controller.get_image_details)
 
 // LEGACY ROUTES

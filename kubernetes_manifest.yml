@@ -38,12 +38,10 @@ spec:
         envFrom:
         - secretRef:
            name: environment-variables
+        # Mounth the image upload directory
         volumeMounts:
         - mountPath: "/usr/share/pv"
           name: ${APPLICATION_NAME}
-      # Credentials to pull image from registry
-      #imagePullSecrets:
-      #- name: registry-credentials
 ---
 apiVersion: v1
 kind: Service
