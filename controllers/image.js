@@ -4,6 +4,7 @@ const mv = require('mv')
 const dotenv = require('dotenv')
 const path = require('path')
 const fs = require('fs')
+
 const { v4: uuidv4 } = require('uuid')
 
 dotenv.config()
@@ -24,7 +25,8 @@ const get_image_id = (req) => {
 exports.upload_image = (req, res) => {
 
   // Parse form using formidable
-  var form = new formidable.IncomingForm();
+  var form = new formidable.IncomingForm()
+
   form.parse(req, (err, fields, files) => {
     // handle formidable errors
     if (err) {
@@ -109,8 +111,9 @@ exports.get_image = (req,res) => {
     }
 
     // if using file path, sends binary file when using K8s
-    //res.sendFile(path.join(uploads_directory_path, image.path))
-    res.redirect(`/${image.path}`)
+    const image_absolute_path = path.join(uploads_directory_path, image.path)
+    res.sendFile(image_absolute_path, image.path)
+    //res.redirect(`/${image.path}`)
 
     // save referer
     var referer_url = req.get('Referrer')
