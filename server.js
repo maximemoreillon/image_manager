@@ -56,7 +56,7 @@ app.get('/', (req, res) => {
 
 // REST API
 app.route('/images')
-  .get(image_controller.get_image)
+  .get(auth.authenticate, image_controller.get_image_list)
   .post(auth.authenticate, image_controller.upload_image)
 
 app.route('/images/:id')
