@@ -38,7 +38,7 @@ mongoose.connect(`${MONGODB_URL}/${DB_name}`, {
 // Express configuration
 const app = express()
 app.use(bodyParser.json())
-app.use(express.static(uploads_directory_path))
+//app.use(express.static(uploads_directory_path))
 app.use(cors())
 
 app.get('/', (req, res) => {

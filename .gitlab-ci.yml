@@ -1,6 +1,6 @@
 stages:
   - containerization
-  - deploy
+  - deployment
 
 variables:
   APPLICATION_NAME: image-manager
@@ -20,7 +20,7 @@ containerization:
     - docker image rm ${DOCKER_IMAGE}
 
 deployment:
-  stage: deploy
+  stage: deployment
   tags:
     - moreillon
   allow_failure: true

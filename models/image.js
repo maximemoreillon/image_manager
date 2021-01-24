@@ -9,6 +9,6 @@ var ImageSchema = new mongoose.Schema({
   views: { type: Number, default: 0 },
 })
 
-var Image= mongoose.model('Image', ImageSchema)
+var Image = mongoose.model('Image', ImageSchema)
 
 module.exports = Image
