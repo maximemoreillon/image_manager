@@ -112,7 +112,7 @@ exports.get_image = (req,res) => {
 
     // if using file path, sends binary file when using K8s
     const image_absolute_path = path.join(uploads_directory_path, image.path)
-    res.sendFile(image_absolute_path, image.path)
+    res.sendFile(image_absolute_path)
     //res.redirect(`/${image.path}`)
 
     // save referer
