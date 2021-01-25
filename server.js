@@ -66,6 +66,7 @@ app.route('/images/:id')
 app.route('/images/:id/details')
   .get(image_controller.get_image_details)
 
+
 // LEGACY ROUTES
 app.route('/image')
   .get(image_controller.get_image)

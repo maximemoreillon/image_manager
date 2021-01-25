@@ -5,6 +5,7 @@ var ImageSchema = new mongoose.Schema({
   path: String, // THIS SHOULD BE FILENAME
   size: Number,
   upload_date: Date,
+  uploader_id: String,
   referers: { type: Array, default: [] },
   views: { type: Number, default: 0 },
 })

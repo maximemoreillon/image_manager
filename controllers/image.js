@@ -4,6 +4,7 @@ const mv = require('mv')
 const dotenv = require('dotenv')
 const path = require('path')
 const fs = require('fs')
+const rimraf = require('rimraf')
 
 const { v4: uuidv4 } = require('uuid')
 
@@ -55,26 +56,30 @@ exports.upload_image = (req, res) => {
     const destination_path = path.join(uploads_directory_path, path_relative_to_upload_dir)
 
     mv(original_path, destination_path, {mkdirp: true}, (err) => {
+      // Error handling
       if (err) {
         console.log(`Error moving file: ${err}`)
         return res.status(500).send(`Error moving file: ${err}`)
       }
 
+
+
       // saving info into DB
-      const image = new Image({
+      let image_properties = {
         path: path_relative_to_upload_dir,
         size: files[file_key].size,
         upload_date: new Date(),
-      });
+      }
+
+      const uploader = res.locals.user
+      if(uploader) image_properties.uploader_id = uploader.identity.low
+
+      const image = new Image(image_properties)
 
       image.save()
       .then(() => {
         console.log(`Image successfully saved as ${path_relative_to_upload_dir}`)
-        res.send({
-          _id: image._id,
-          size: image.size,
-          upload_date: new Date(),
-        })
+        res.send(image)
       })
       .catch( err => {
         console.log(`Error saving to DB: ${err}`)
@@ -110,38 +115,37 @@ exports.get_image = (req,res) => {
       return res.status(404).send(`Image not found in DB`)
     }
 
-    // if using file path, sends binary file when using K8s
+    // Send the image to the user
     const image_absolute_path = path.join(uploads_directory_path, image.path)
     res.sendFile(image_absolute_path)
-    //res.redirect(`/${image.path}`)
+
+    // Increase view count
+    if(image.views) image.views += 1
+    else image.views = 1
 
     // save referer
-    var referer_url = req.get('Referrer')
+    const referer_url = req.get('Referrer')
     if(referer_url) {
-
       let found_referer = image.referers.find( referer => {
         return referer.url === referer_url
       })
 
       if(found_referer){
         found_referer.last_request = new Date()
-
-        image.save()
-        .then( () => console.log('Referer updated'))
-        .catch(err => console.log(`Error saving referer: ${err}`))
-
       }
       else {
         image.referers.push({
           url: referer_url,
           last_request: new Date()
         })
-
-        image.save()
-        .then( () => console.log('Referer saved'))
-        .catch(err => console.log(`Error saving referer: ${err}`))
       }
     }
+
+
+
+    image.save()
+    .then( () => console.log('Referer updated'))
+    .catch(err => console.log(`Error saving referer: ${err}`))
 
   })
 
@@ -162,14 +166,27 @@ exports.delete_image = (req,res) => {
   Image.findById(image_id, (err, image) => {
 
     // Move image to trash directory
-    var original_path = path.join(uploads_directory_path, image.path)
-    var original_name = path.basename(image.path)
-    var destination_path = path.join(trash_directory_path, original_name)
+    const original_path = path.join(uploads_directory_path, image.path)
+    const original_name = path.basename(image.path)
 
-    mv(original_path, destination_path , {mkdirp: true}, (err) => {
+    const user = res.locals.user
+    if(!user) {
+      console.log(`Unauthorized to delete image`)
+      return res.status(403).send(`Unauthorized to delete image ${image_id}`)
+    }
 
-      // Remove from DB regardless of errors
-      if (err)  console.log(`Error moving file to trash: ${err}`)
+    if(!user.properties.isAdmin && user.identity.low !== image.uploader_id) {
+      console.log(`User ${user.identity.low} unahtorized to delete image ${image_id}`)
+      return res.status(403).send(`Unauthorized to delete image ${image_id}`)
+    }
+
+    rimraf(original_path, (error) => {
+
+      if(error) {
+        console.log(error)
+        res.status(500).send(`Failed to delete image ${image_id}`)
+        return
+      }
 
       image.remove( (err, result) => {
         if (err) {
@@ -181,7 +198,7 @@ exports.delete_image = (req,res) => {
         res.send(`Successfully deleted ${original_name}`)
       })
 
-    });
+    })
 
 
   })
