@@ -175,7 +175,7 @@ exports.delete_image = (req,res) => {
       return res.status(403).send(`Unauthorized to delete image ${image_id}`)
     }
 
-    if(!user.properties.isAdmin && user.identity.low !== image.uploader_id) {
+    if(!user.properties.isAdmin && user.identity.low.toString() !== image.uploader_id) {
       console.log(`User ${user.identity.low} unahtorized to delete image ${image_id}`)
       return res.status(403).send(`Unauthorized to delete image ${image_id}`)
     }
