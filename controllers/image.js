@@ -248,6 +248,7 @@ exports.get_image_list = (req,res) => {
     }
 
     // Send the documents batch by batch ifspecified
+    // This should be done at the DB query level
     if('start_index' in req.query && 'load_count' in req.query) {
       res.send(docs.slice(req.query.start_index, req.query.start_index+req.query.load_count))
     }
