@@ -14,7 +14,7 @@ const pjson = require('./package.json')
 dotenv.config()
 
 const DB_name = process.env.MONGODB_DB || 'images'
-const MONGODB_URL = 'test'//process.env.MONGODB_URL || 'mongodb://mongo'
+const MONGODB_URL = process.env.MONGODB_URL || 'UNDEFINED'// 'mongodb://mongo'
 const app_port = process.env.APP_PORT || 80
 
 const uploads_directory_path = process.env.UPLOADS_DIRECTORY || "/usr/share/pv"
