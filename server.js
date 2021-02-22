@@ -13,11 +13,11 @@ const pjson = require('./package.json')
 
 dotenv.config()
 
-const DB_name = process.env.MONGODB_DB || 'images'
-const MONGODB_URL = process.env.MONGODB_URL || 'UNDEFINED'// 'mongodb://mongo'
-const app_port = process.env.APP_PORT || 80
+const DB_name = process.env.MONGODB_DB ?? 'images'
+const MONGODB_URL = process.env.MONGODB_URL ?? 'UNDEFINED'// 'mongodb://mongo'
+const app_port = process.env.APP_PORT ?? 80
 
-const uploads_directory_path = process.env.UPLOADS_DIRECTORY || "/usr/share/pv"
+const uploads_directory_path = process.env.UPLOADS_DIRECTORY ?? "/usr/share/pv"
 const trash_directory_path = path.join(uploads_directory_path, 'trash')
 
 exports.uploads_directory_path = uploads_directory_path
@@ -50,7 +50,7 @@ app.get('/', (req, res) => {
     version: pjson.version,
     mongodb_url: MONGODB_URL,
     mongodb_db: DB_name,
-    authentication_api_url: process.env.AUTHENTICATION_API_URL || 'UNDEFINED'
+    authentication_api_url: process.env.AUTHENTICATION_API_URL ?? 'UNDEFINED'
   })
 })
 

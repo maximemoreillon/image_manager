@@ -62,19 +62,13 @@ exports.upload_image = (req, res) => {
         return res.status(500).send(`Error moving file: ${err}`)
       }
 
-
-
       // saving info into DB
-      let image_properties = {
+      const image = new Image({
         path: path_relative_to_upload_dir,
         size: files[file_key].size,
         upload_date: new Date(),
-      }
-
-      const uploader = res.locals.user
-      if(uploader) image_properties.uploader_id = uploader.identity.low
-
-      const image = new Image(image_properties)
+        uploader_id: res.locals.user?.identity?.low ?? res.locals.user?.identity
+      })
 
       image.save()
       .then(() => {
@@ -175,8 +169,9 @@ exports.delete_image = (req,res) => {
       return res.status(403).send(`Unauthorized to delete image ${image_id}`)
     }
 
-    if(!user.properties.isAdmin && user.identity.low.toString() !== image.uploader_id) {
-      console.log(`User ${user.identity.low} unahtorized to delete image ${image_id}`)
+    const current_user_id = user.identity.low ?? user.identity
+    if(!user.properties.isAdmin && current_user_id.toString() !== image.uploader_id) {
+      console.log(`User ${current_user_id} unahtorized to delete image ${image_id}`)
       return res.status(403).send(`Unauthorized to delete image ${image_id}`)
     }
 
