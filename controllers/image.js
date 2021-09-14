@@ -5,15 +5,13 @@ const dotenv = require('dotenv')
 const path = require('path')
 const fs = require('fs')
 const rimraf = require('rimraf')
-
+const {uploads_directory_path, trash_directory_path} = require('../folder_config.js')
 const { v4: uuidv4 } = require('uuid')
+const Image = require('../models/image.js')
 
 dotenv.config()
 
-let uploads_directory_path = require('../server.js').uploads_directory_path
-let trash_directory_path = require('../server.js').trash_directory_path
 
-const Image = require('../models/image.js')
 
 const get_image_id = (req) => {
   return req.params.id

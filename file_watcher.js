@@ -2,9 +2,9 @@ const chokidar = require('chokidar')
 const dotenv = require('dotenv')
 const path = require('path')
 const fs = require('fs')
+const {uploads_directory_path, trash_directory_path} = require('./folder_config.js')
 
-let uploads_directory_path = require('./server.js').uploads_directory_path
-let trash_directory_path = require('./server.js').trash_directory_path
+
 
 const Image = require('./models/image.js')
 
@@ -72,3 +72,5 @@ watch.on('unlink', absolute_file_path => {
   }, 3000)
 
 })
+
+module.exports = watch
