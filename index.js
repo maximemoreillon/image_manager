@@ -17,17 +17,9 @@ const app_port = process.env.APP_PORT ?? 80
 
 
 
-
-
-
-
-
-
-
 // Express configuration
 const app = express()
 app.use(bodyParser.json())
-//app.use(express.static(uploads_directory_path))
 app.use(cors())
 
 app.get('/', (req, res) => {
@@ -44,7 +36,9 @@ app.get('/', (req, res) => {
   })
 })
 
+
 app.use('/images', images_router)
+app.get('/image', image_controller.get_image)
 
 
 
