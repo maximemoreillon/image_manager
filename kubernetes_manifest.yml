@@ -60,7 +60,9 @@ metadata:
   name: ${APPLICATION_NAME} # Name of the ingress, named after the application
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod" # This is necessary, no idea why
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "5g"
+    nginx/client_max_body_size: 5g
 spec:
   tls:
   - hosts:

@@ -25,7 +25,7 @@ deployment:
     - moreillon
   allow_failure: true
   script:
-    #- envsubst < kubernetes_manifest.yml | kubectl apply -f -
+    - envsubst < kubernetes_manifest.yml | kubectl apply -f -
     - kubectl rollout restart deployment/${APPLICATION_NAME}
   environment:
     name: production
