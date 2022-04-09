@@ -21,66 +21,62 @@ const get_image_id = (req) => {
 
 
 
-exports.upload_image = (req, res) => {
 
-  // Parse form using formidable
-  var form = new formidable.IncomingForm()
+const get_image_from_form = (req) => new Promise((resolve, reject) => {
+  const form = new formidable.IncomingForm()
 
   form.parse(req, (err, fields, files) => {
-    // handle formidable errors
-    if (err) {
-      console.log(`Error parsing form: ${err}`)
-      return res.status(500).send(`Error parsing form: ${err}`);
-    }
+    if(err) return reject(err)
+    const file = files['image']
 
-    const file_key = 'image'
+    if(!file) reject(`Image not present in request`)
+    if(!file.type.includes('image')) reject(`File does not seem to be an image`)
 
-    // Check content of request
-    if(! (file_key in files)) {
-      console.log(`Image not present in request`)
-      return res.status(400).send(`Image not present in request`);
-    }
+    resolve(file)
+  })
 
-    // Check if image
-    if(!files[file_key].type.includes('image')) {
-      console.log(`File does not seem to be an image`)
-      return res.status(400).send(`File does not seem to be an image`);
-    }
+})
 
-    const original_path = files[file_key].path
-    const original_name = files[file_key].name
+const move_file = (original_path, destination_path) => new Promise((resolve, reject) => {
+  mv(original_path, destination_path, {mkdirp: true}, (err) => {
+    if (err) reject(err)
+    resolve()
+  })
+})
+
+
+
+exports.upload_image = async (req, res, next) => {
+
+  try {
+    const uploader_id = res.locals.user?._id || res.locals.user?.properties._id
+
+    const {
+      path: original_path,
+      name: original_name,
+      size,
+    } = await get_image_from_form(req)
+
     const extension = path.extname(original_name)
-    const path_relative_to_upload_dir = uuidv4()+extension
+    const path_relative_to_upload_dir = `${uuidv4()}${extension}`
     const destination_path = path.join(uploads_directory_path, path_relative_to_upload_dir)
 
-    mv(original_path, destination_path, {mkdirp: true}, (err) => {
-      // Error handling
-      if (err) {
-        console.log(`Error moving file: ${err}`)
-        return res.status(500).send(`Error moving file: ${err}`)
-      }
+    await move_file(original_path,destination_path)
 
-      // saving info into DB
-      const image = new Image({
-        path: path_relative_to_upload_dir,
-        size: files[file_key].size,
-        upload_date: new Date(),
-        uploader_id: res.locals.user?.identity?.low ?? res.locals.user?.identity
-      })
-
-      image.save()
-      .then(() => {
-        console.log(`Image successfully saved as ${path_relative_to_upload_dir}`)
-        res.send(image)
-      })
-      .catch( err => {
-        console.log(`Error saving to DB: ${err}`)
-        return res.status(400).send(`Error saving to DB: ${err}`);
-      })
-
+    const record = await Image.create({
+      path: path_relative_to_upload_dir,
+      size,
+      upload_date: new Date(),
+      uploader_id
     })
 
-  })
+    console.log(`Image successfully saved as ${path_relative_to_upload_dir}`)
+    res.send(record)
+  }
+  catch (error) {
+    next(error)
+  }
+
 }
 
 exports.get_image = (req,res) => {

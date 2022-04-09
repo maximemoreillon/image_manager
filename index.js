@@ -3,7 +3,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const dotenv = require('dotenv')
-const pjson = require('./package.json')
+const {version, author} = require('./package.json')
 const db = require('./db.js')
 const image_controller = require('./controllers/image.js')
 const images_router = require('./routes/images.js')
@@ -25,8 +25,8 @@ app.use(cors())
 app.get('/', (req, res) => {
   res.send({
     application_name: 'Image manager API',
-    author: 'Maxime MOREILLON',
-    version: pjson.version,
+    author,
+    version,
     mongodb: {
       url: db.url,
       db: db.db,
@@ -38,6 +38,8 @@ app.get('/', (req, res) => {
 
 
 app.use('/images', images_router)
+
+// Legacy
 app.get('/image', image_controller.get_image)
 
 
@@ -46,5 +48,7 @@ app.get('/image', image_controller.get_image)
 
 // Start server
 app.listen(app_port, () => {
-  console.log(`Image manager API v${pjson.version} listening on port ${app_port}`);
+  console.log(`Image manager API v${version} listening on port ${app_port}`);
 })
+
+exports.app = app
