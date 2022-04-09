@@ -1,32 +1,46 @@
 stages:
-  - containerization
-  - deployment
+  - build
+  - deploy
 
 variables:
   APPLICATION_NAME: image-manager
-  DOCKER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
-  CERTIFICATE_DOMAIN: img.maximemoreillon.com
+  CONTAINER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:latest
+  CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  K8S_INGRESS_DOMAIN: img.maximemoreillon.com
 
-containerization:
-  stage: containerization
+# Needed for Docker in docker build
+image: moreillon/ci-dind
+services:
+  - name: docker:19.03.12-dind
+
+build:
+  stage: build
+  only:
+    - master
   tags:
-    - moreillon
-  script:
+    - dind
+  before_script:
     # Docker hub login
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
+  script:
     # Build and push
     - docker build -t ${DOCKER_IMAGE} .
-    - docker push ${DOCKER_IMAGE}
-    - docker image rm ${DOCKER_IMAGE}
+        # If pass, then push the images
+    - docker tag ${DOCKER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
+    - docker tag ${DOCKER_IMAGE} ${CONTAINER_IMAGE_LATEST}
+    # Pushing
+    - docker push ${CONTAINER_IMAGE_TAGGED}
+    - docker push ${CONTAINER_IMAGE_LATEST}
 
 deployment:
   stage: deployment
+  only:
+    - master
   tags:
-    - moreillon
-  allow_failure: true
+    - dind
   script:
     - envsubst < kubernetes_manifest.yml | kubectl apply -f -
-    - kubectl rollout restart deployment/${APPLICATION_NAME}
   environment:
     name: production
     kubernetes:
