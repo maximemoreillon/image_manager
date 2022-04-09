@@ -1,11 +1,16 @@
 const mongoose = require("mongoose")
 
 var ImageSchema = new mongoose.Schema({
-  // The path is relative to the uploads directory
-  path: String, // THIS SHOULD BE FILENAME
+
+  filename: String,
+  path: String, // Legacy, renamed into filename above
+
+
   size: Number,
   upload_date: Date,
   uploader_id: String,
+
+  // Keeping track of views and origin of those views
   referers: { type: Array, default: [] },
   views: { type: Number, default: 0 },
 })

@@ -14,18 +14,20 @@ const mongodb_options = {
 let mongodb_connected = false
 
 
-function mongoose_connect(){
+const connect = () => new Promise((resolve, reject) => {
   console.log('[MongoDB] Attempting connection...')
   const connection_url = `${mongodb_url}/${mongodb_db}`
   mongoose.connect(connection_url, mongodb_options)
-  .then(() => {console.log('[Mongoose] Initial connection successful')})
+  .then(() => {
+    resolve()
+    console.log('[Mongoose] Initial connection successful')
+  })
   .catch(error => {
     console.log('[Mongoose] Initial connection failed')
-    setTimeout(mongoose_connect,5000)
+    setTimeout(connect,5000)
   })
-}
+})
 
-mongoose_connect()
 
 
 const db = mongoose.connection
@@ -40,4 +42,5 @@ db.once('open', () => {
 
 exports.url = mongodb_url
 exports.db = mongodb_db
+exports.connect = connect
 exports.get_connected = () => mongodb_connected

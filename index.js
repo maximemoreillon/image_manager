@@ -8,14 +8,24 @@ const db = require('./db.js')
 const image_controller = require('./controllers/image.js')
 const images_router = require('./routes/images.js')
 const folder_config = require('./folder_config.js')
-//const file_watcher = require('./file_watcher.js')
+const {migrate} = require('./migrations/folder_separated_images.js')
+
 
 dotenv.config()
 
 
-const app_port = process.env.APP_PORT ?? 80
 
 
+const {
+  APP_PORT = 80,
+  AUTHENTICATION_API_URL = 'UNDEFINED',
+} = process.env
+
+db.connect()
+  .then(() => {
+    // migrate
+    migrate()
+  })
 
 // Express configuration
 const app = express()
@@ -32,7 +42,7 @@ app.get('/', (req, res) => {
       db: db.db,
       connected: db.get_connected(),
     },
-    authentication_api_url: process.env.AUTHENTICATION_API_URL ?? 'UNDEFINED',
+    authentication_api_url: AUTHENTICATION_API_URL,
   })
 })
 
@@ -43,12 +53,20 @@ app.use('/images', images_router)
 app.get('/image', image_controller.get_image)
 
 
+// Express error handler
+app.use((error, req, res, next) => {
+  console.error(error)
+  let { statusCode = 500, message = error } = error
+  if(isNaN(statusCode) || statusCode > 600) statusCode = 500
+  res.status(statusCode).send(message)
+})
+
 
 
 
 // Start server
-app.listen(app_port, () => {
-  console.log(`Image manager API v${version} listening on port ${app_port}`);
+app.listen(APP_PORT, () => {
+  console.log(`Image manager API v${version} listening on port ${APP_PORT}`);
 })
 
 exports.app = app

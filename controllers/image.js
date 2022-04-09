@@ -5,10 +5,14 @@ const dotenv = require('dotenv')
 const path = require('path')
 const fs = require('fs')
 const rimraf = require('rimraf')
-const {uploads_directory_path, trash_directory_path} = require('../folder_config.js')
-const { v4: uuidv4 } = require('uuid')
+const {
+  uploads_directory_path,
+  trash_directory_path
+} = require('../folder_config.js')
 const Image = require('../models/image.js')
-
+const createHttpError = require('http-errors')
+const sharp = require('sharp')
+const {move_file} = require('../utils.js')
 dotenv.config()
 
 
@@ -29,48 +33,60 @@ const get_image_from_form = (req) => new Promise((resolve, reject) => {
     if(err) return reject(err)
     const file = files['image']
 
-    if(!file) reject(`Image not present in request`)
-    if(!file.type.includes('image')) reject(`File does not seem to be an image`)
+    if(!file) reject(createHttpError(400,`Image not present in request`))
+    if(!file.type.includes('image')) reject(createHttpError(400,`File does not seem to be an image`))
 
     resolve(file)
   })
 
 })
 
-const move_file = (original_path, destination_path) => new Promise((resolve, reject) => {
-  mv(original_path, destination_path, {mkdirp: true}, (err) => {
-    if (err) reject(err)
-    resolve()
-  })
-})
+
+
+const get_thumbnail_filename = (original_filename) => {
+  return original_filename.replace(/(\.[\w\d_-]+)$/i, '_thumbnail$1')
+}
+
+const create_image_thumbnail = async (file) => {
+
+  const thumbnail_filename = get_thumbnail_filename(req.file.originalname)
+  const thumbnail_path = path.resolve(req.file.destination,thumbnail_filename)
+
+  const options = { failOnError: true }
+
+  await sharp(req.file.path, options)
+    .resize(128, 128)
+    .withMetadata()
+    .toFile(thumbnail_path)
+}
 
 
 
 exports.upload_image = async (req, res, next) => {
 
   try {
-    const uploader_id = res.locals.user?._id || res.locals.user?.properties._id
+
+    const uploader_id = res.locals.user?._id
+      || res.locals.user?.properties._id
 
     const {
       path: original_path,
-      name: original_name,
+      name: filename,
       size,
     } = await get_image_from_form(req)
 
-    const extension = path.extname(original_name)
-    const path_relative_to_upload_dir = `${uuidv4()}${extension}`
-    const destination_path = path.join(uploads_directory_path, path_relative_to_upload_dir)
+    const record = await Image.create({
+      filename,
+      size,
+      upload_date: new Date(),
+      uploader_id,
+    })
+
+    const destination_path = path.join(uploads_directory_path, record._id.toString(), filename)
 
     await move_file(original_path,destination_path)
 
-    const record = await Image.create({
-      path: path_relative_to_upload_dir,
-      size,
-      upload_date: new Date(),
-      uploader_id
-    })
-
-    console.log(`Image successfully saved as ${path_relative_to_upload_dir}`)
+    console.log(`Image successfully saved as ${destination_path}`)
     res.send(record)
   }
   catch (error) {
@@ -79,63 +95,59 @@ exports.upload_image = async (req, res, next) => {
 
 }
 
-exports.get_image = (req,res) => {
+const save_views = async (req, image) => {
+  // Increase view count
+  if(image.views) image.views += 1
+  else image.views = 1
 
-  const image_id = get_image_id(req)
+  // save referer
+  const referer_url = req.get('Referrer')
 
-  // Check validity of request
-  if(!image_id) {
-    console.log(`ID not present in request`)
-    return res.status(400).send(`ID not present in request`)
+  if(referer_url) {
+    let found_referer = image.referers.find( ({url}) => url === referer_url )
+
+    if(found_referer) found_referer.last_request = new Date()
+    else {
+      image.referers.push({
+        url: referer_url,
+        last_request: new Date()
+      })
+    }
   }
 
-  Image.findById(image_id, (err, image) => {
+  await image.save()
+}
 
-    // handle errors
-    if (err) {
-      console.log(`Error retriving document from DB: ${err}`)
-      return res.status(500).send(`Error retriving document from DB: ${err}`)
-    }
+exports.get_image = async (req,res, next) => {
 
-    // Check if image actually exists
-    if(!image) {
-      console.log(`Image not found in DB`)
-      return res.status(404).send(`Image not found in DB`)
-    }
+  try {
+    const image_id = get_image_id(req)
 
-    // Send the image to the user
-    const image_absolute_path = path.join(uploads_directory_path, image.path)
-    res.sendFile(image_absolute_path)
+    if(!image_id) throw createHttpError(400, `Image ID not present in request`)
 
-    // Increase view count
-    if(image.views) image.views += 1
-    else image.views = 1
+    const image = await Image.findById(image_id)
 
-    // save referer
-    const referer_url = req.get('Referrer')
-    if(referer_url) {
-      let found_referer = image.referers.find( referer => {
-        return referer.url === referer_url
-      })
+    if(!image) throw createHttpError(404, `Image not found in DB`)
 
-      if(found_referer){
-        found_referer.last_request = new Date()
-      }
-      else {
-        image.referers.push({
-          url: referer_url,
-          last_request: new Date()
-        })
-      }
-    }
+    const image_path = path.join(
+      uploads_directory_path,
+      image._id.toString(),
+      image.filename
+    )
+
+    await save_views(req, image)
+
+    console.log(`Image at ${image_path} queried`);
+
+    res.sendFile(image_path)
 
 
 
-    image.save()
-    .then( () => console.log('Referer updated'))
-    .catch(err => console.log(`Error saving referer: ${err}`))
+  }
+  catch (error) {
+    next(error)
+  }
 
-  })
 
 }
 

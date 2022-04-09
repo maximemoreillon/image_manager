@@ -44,6 +44,41 @@ describe("/images", () => {
 
       image_id = body._id
 
+      console.log({image_id})
+
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe("GET /images", () => {
+
+    it("Should allow the query of images", async () => {
+      const {status, body} = await request(app)
+        .get(`/images`)
+        .set('Authorization', `Bearer ${jwt}`)
+
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe("GET /images/:image_id", () => {
+
+    it("Should allow the query of an image", async () => {
+      const {status, body} = await request(app)
+        .get(`/images/${image_id}`)
+        .set('Authorization', `Bearer ${jwt}`)
+
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe("GET /images/:image_id/details", () => {
+
+    it("Should allow the query of details about an image", async () => {
+      const {status, body} = await request(app)
+        .get(`/images/${image_id}/details`)
+        .set('Authorization', `Bearer ${jwt}`)
+
       expect(status).to.equal(200)
     })
   })
