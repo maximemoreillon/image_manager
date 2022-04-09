@@ -25,10 +25,10 @@ build:
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
   script:
     # Build and push
-    - docker build -t ${DOCKER_IMAGE} .
+    - docker build -t ${CONTAINER_IMAGE} .
         # If pass, then push the images
-    - docker tag ${DOCKER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
-    - docker tag ${DOCKER_IMAGE} ${CONTAINER_IMAGE_LATEST}
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_LATEST}
     # Pushing
     - docker push ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_LATEST}
