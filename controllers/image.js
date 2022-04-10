@@ -135,12 +135,9 @@ exports.get_thumbnail = async (req,res, next) => {
       thumbnail_filename
     )
 
-
-    console.log(`Thumbnail at ${thumbnail_path} queried`);
+    console.log(`Thumbnail of image ${image_id} queried`);
 
     res.sendFile(thumbnail_path)
-
-
 
   }
   catch (error) {
@@ -188,33 +185,24 @@ exports.delete_image = async (req,res, next) => {
 
 }
 
-exports.get_image_details = (req,res, next) => {
+exports.get_image_details = async (req,res, next) => {
 
-  const image_id = get_image_id(req)
+  try {
 
-  // Check validity of request
-  if(!image_id) {
-    console.log(`ID not present in request`)
-    return res.status(400).send(`ID not present in request`)
-  }
+    const image_id = get_image_id(req)
+    if(!image_id) throw createHttpError(400, `ID not present in request`)
 
-  Image.findById(image_id, (err, image) => {
+    const image = await Image.findById(image_id)
+    if(!image) throw createHttpError(404, `Image not found in DB`)
 
-    // handle errors
-    if (err) {
-      console.log(`Error retriving document from DB: ${err}`)
-      return res.status(500).send(`Error retriving document from DB: ${err}`)
-    }
-
-    // Check if image actually exists
-    if(!image) {
-      console.log(`Image not found in DB`)
-      return res.status(404).send(`Image not found in DB`)
-    }
-
+    console.log(`Details of image ${image_id} queried`);
     res.send(image)
 
-  })
+  }
+  catch (error) {
+    next(error)
+  }
+
 
 }
 

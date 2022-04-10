@@ -93,16 +93,16 @@ describe("/images", () => {
     })
   })
 
-  // describe("DELETE /images/:image_id", () => {
-  //
-  //   it("Should allow the deletion of an image", async () => {
-  //     const {status, body} = await request(app)
-  //       .delete(`/images/${image_id}`)
-  //       .set('Authorization', `Bearer ${jwt}`)
-  //
-  //     expect(status).to.equal(200)
-  //   })
-  // })
+  describe("DELETE /images/:image_id", () => {
+
+    it("Should allow the deletion of an image", async () => {
+      const {status, body} = await request(app)
+        .delete(`/images/${image_id}`)
+        .set('Authorization', `Bearer ${jwt}`)
+
+      expect(status).to.equal(200)
+    })
+  })
 
 
 

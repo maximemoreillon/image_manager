@@ -44,7 +44,7 @@ exports.create_image_thumbnail = async (image_path) => {
 
 
   await sharp(image_path, options)
-    .resize(128, 128)
+    .resize(256, 256)
     .withMetadata()
     .toFile(thumbnail_path)
 }
