@@ -16,7 +16,7 @@ router.route('/:id')
   .delete(auth(auth_options), image_controller.delete_image)
 
 router.route('/:id/thumbnail')
-  .get(auth(auth_options),image_controller.get_thumbnail)
+  .get(,image_controller.get_thumbnail)
 
 router.route('/:id/details')
   .get(auth(auth_options),image_controller.get_image_details)
