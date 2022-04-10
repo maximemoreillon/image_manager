@@ -215,14 +215,14 @@ exports.get_image_list = async (req,res, next) => {
       load_count = 0
     } = req.query
 
-    const images = await Image.find({})
+    const items = await Image.find({})
       .sort({upload_date: -1})
       .skip(Number(start_index))
       .limit(Math.max(Number(load_count), 0))
 
-    // TODO: Query total and respond with both total and queried documents
+    const response = { total, items }
 
-    res.send(images)
+    res.send(response)
 
   }
   catch (error) {
