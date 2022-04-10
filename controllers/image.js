@@ -210,12 +210,15 @@ exports.get_image_list = async (req,res, next) => {
 
   try {
 
-    const { skip = 0, limit = 50 } = req.query
+    const { skip = 0, limit = 50, order = -1, sort = 'upload_date'} = req.query
     const query = {}
+    const sort_and_order = {}
+    sort_and_order[sort] = order
 
     const items = await Image
       .find(query)
       .skip(Number(skip))
+      .sort(sort_and_order)
       .limit(Math.max(Number(limit), 0))
 
     const total = await Image.countDocuments(query)

@@ -26,7 +26,7 @@ build:
   script:
     # Build and push
     - docker build -t ${CONTAINER_IMAGE} .
-        # If pass, then push the images
+
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_LATEST}
     # Pushing
