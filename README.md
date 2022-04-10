@@ -19,8 +19,6 @@ Article regarding the design of the service on the [project page](https://articl
 | /images/{user_id}/thumbnail | GET | - | Get the image thumbnail |
 | /images/{user_id}/details | GET | - | Get details about the upload |
 
-Note: To target the user currently logged in, use 'self' as ID
-
 ## Environment variables
 | Variable  | Description |
 | --- | --- |
