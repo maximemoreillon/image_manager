@@ -55,6 +55,7 @@ test:
       --name tdd-um
       --network tdd
       --hostname tdd-um
+      -e MONGODB_URL=mongodb://tdd-db
       -e JWT_SECRET=keyboardcat
       moreillon/user-manager-mongoose
     - sleep 120 # Wait for containers to be available
