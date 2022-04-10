@@ -3,6 +3,7 @@ const {expect} = require("chai")
 const {app} = require("../index.js")
 const axios = require('axios')
 const dotenv = require('dotenv')
+
 dotenv.config()
 
 const {
@@ -44,8 +45,6 @@ describe("/images", () => {
 
       image_id = body._id
 
-      console.log({image_id})
-
       expect(status).to.equal(200)
     })
   })
@@ -72,6 +71,17 @@ describe("/images", () => {
     })
   })
 
+  describe("GET /images/:image_id/thumbnail", () => {
+
+    it("Should allow the query of an image thumbnail", async () => {
+      const {status, body} = await request(app)
+        .get(`/images/${image_id}/thumbnail`)
+        .set('Authorization', `Bearer ${jwt}`)
+
+      expect(status).to.equal(200)
+    })
+  })
+
   describe("GET /images/:image_id/details", () => {
 
     it("Should allow the query of details about an image", async () => {
@@ -82,6 +92,17 @@ describe("/images", () => {
       expect(status).to.equal(200)
     })
   })
+
+  // describe("DELETE /images/:image_id", () => {
+  //
+  //   it("Should allow the deletion of an image", async () => {
+  //     const {status, body} = await request(app)
+  //       .delete(`/images/${image_id}`)
+  //       .set('Authorization', `Bearer ${jwt}`)
+  //
+  //     expect(status).to.equal(200)
+  //   })
+  // })
 
 
 

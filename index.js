@@ -1,14 +1,14 @@
 // NPM modules
 const express = require('express')
-const bodyParser = require('body-parser')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const {version, author} = require('./package.json')
 const db = require('./db.js')
 const image_controller = require('./controllers/image.js')
 const images_router = require('./routes/images.js')
-const folder_config = require('./folder_config.js')
+const {uploads_directory_path} = require('./folder_config.js')
 const {migrate} = require('./migrations/folder_separated_images.js')
+
 
 
 dotenv.config()
@@ -23,13 +23,12 @@ const {
 
 db.connect()
   .then(() => {
-    // migrate
     migrate()
   })
 
 // Express configuration
 const app = express()
-app.use(bodyParser.json())
+app.use(express.json())
 app.use(cors())
 
 app.get('/', (req, res) => {
@@ -42,6 +41,7 @@ app.get('/', (req, res) => {
       db: db.db,
       connected: db.get_connected(),
     },
+    uploads_directory_path,
     authentication_api_url: AUTHENTICATION_API_URL,
   })
 })
