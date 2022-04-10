@@ -29,6 +29,7 @@ build:
   script:
     # Build and push
     - docker build -t ${CONTAINER_IMAGE_TEST} .
+    - docker push ${CONTAINER_IMAGE_TEST}
 
 test:
   stage: test
