@@ -7,7 +7,7 @@ const dotenv = require('dotenv')
 dotenv.config()
 
 const {
-  AUTHENTICATION_API_URL,
+  LOGIN_URL,
   TEST_USER_USERNAME,
   TEST_USER_PASSWORD,
 } = process.env
@@ -17,8 +17,7 @@ const {
 
 const login = async () => {
   const body = {username: TEST_USER_USERNAME, password: TEST_USER_PASSWORD}
-  const url = `${process.env.AUTHENTICATION_API_URL}/login`
-  const {data: {jwt}} = await axios.post(url,body)
+  const {data: {jwt}} = await axios.post(LOGIN_URL,body)
   return jwt
 }
 

@@ -1,13 +1,16 @@
 stages:
   - build
+  - test
   - deploy
 
 variables:
   APPLICATION_NAME: image-manager
   CONTAINER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
   CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:latest
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
   K8S_INGRESS_DOMAIN: img.maximemoreillon.com
+
 
 # Needed for Docker in docker build
 image: moreillon/ci-dind
@@ -25,13 +28,60 @@ build:
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
   script:
     # Build and push
-    - docker build -t ${CONTAINER_IMAGE} .
+    - docker build -t ${CONTAINER_IMAGE_TEST} .
 
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_LATEST}
+test:
+  stage: test
+  tags:
+    - dind
+  before_script:
+    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
+    # Creating network for TDD
+    - docker network create ${TEST_NETWORK}
+    # Creating DB container in network
+    - >
+      docker run
+      -d
+      --rm
+      --name tdd-db
+      --network tdd
+      --hostname tdd-db
+      mongo:4
+    # User manager
+    - >
+      docker run
+      -d
+      --rm
+      --name tdd-um
+      --network tdd
+      --hostname tdd-um
+      -e JWT_SECRET=keyboardcat
+      moreillon/user-manager-mongoose
+    - sleep 120 # Wait for containers to be available
+
+
+  script:
+    # Run test
+    - >
+      docker run
+      --rm
+      --name tdd
+      --network tdd
+      -e MONGODB_URL=mongodb://tdd-db
+      -e IDENTIFICATION_URL=http://tdd-um/users/self
+      -e LOGIN_URL=http://tdd-um/auth/login
+      -e TEST_USER_USERNAME=admin
+      -e TEST_USER_PASSWORD=admin
+      ${CONTAINER_IMAGE_TEST}
+      npm run coverage
+    # Tagging
+    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
+    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_LATEST}
     # Pushing
     - docker push ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_LATEST}
+
+
 
 deploy:
   stage: deploy
