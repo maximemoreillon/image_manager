@@ -11,8 +11,9 @@ var ImageSchema = new mongoose.Schema({
   uploader_id: String,
 
   // Keeping track of views and origin of those views
-  referers: { type: Array, default: [] },
   views: { type: Number, default: 0 },
+  last_viewed: Date,
+  referers: { type: Array, default: [] },
 })
 
 var Image = mongoose.model('Image', ImageSchema)

@@ -65,6 +65,9 @@ const save_views = async (req, image) => {
   if(image.views) image.views += 1
   else image.views = 1
 
+  // Save last view data
+  image.last_viewed = new Date()
+
   // save referer
   const referer_url = req.get('Referrer')
 
