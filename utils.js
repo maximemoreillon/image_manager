@@ -5,17 +5,17 @@ const { uploads_directory_path } = require('./folder_config.js')
 const rimraf = require('rimraf')
 const formidable = require('formidable')
 
-exports.get_image_from_form = (req) => new Promise((resolve, reject) => {
+exports.parse_form = (req) => new Promise((resolve, reject) => {
   const form = new formidable.IncomingForm()
 
   form.parse(req, (err, fields, files) => {
     if(err) return reject(err)
-    const file = files['image']
+    const image = files['image']
 
-    if(!file) reject(createHttpError(400,`Image not present in request`))
-    if(!file.type.includes('image')) reject(createHttpError(400,`File does not seem to be an image`))
+    if(!image) reject(createHttpError(400,`Image not present in request`))
+    if(!image.type.includes('image')) reject(createHttpError(400,`File does not seem to be an image`))
 
-    resolve(file)
+    resolve({image, fields})
   })
 
 })

@@ -1,24 +1,32 @@
 const dotenv = require('dotenv')
 const path = require('path')
-const {
-  uploads_directory_path,
-  trash_directory_path
-} = require('../folder_config.js')
+const { uploads_directory_path } = require('../folder_config.js')
 const Image = require('../models/image.js')
 const createHttpError = require('http-errors')
-const sharp = require('sharp')
 const {
   move_file,
   get_thumbnail_filename,
   create_image_thumbnail,
   delete_folder,
-  get_image_from_form,
+  parse_form,
 } = require('../utils.js')
-const { v4: uuidv4 } = require('uuid') // used in legacy upload
 
 dotenv.config()
 
+const enforce_restrictions = (image, res) => {
+  if(!image.restricted) return
+  const {user} = res.locals
 
+  if (!user) throw createHttpError(403, `Access to this image is restricted`)
+
+  const user_id = user._id || user.properties._id
+  const user_is_admin = user.isAdmin || user.properties.isAdmin
+
+  if (!user_is_admin && user_id.toString() !== image.uploader_id) {
+    throw createHttpError(403, `Access to this image is restricted`)
+  }
+    
+}
 
 const get_image_id = (req) => {
   return req.params.id
@@ -34,16 +42,22 @@ exports.upload_image = async (req, res, next) => {
       || res.locals.user?.properties._id
 
     const {
-      path: original_path,
-      name: filename,
-      size,
-    } = await get_image_from_form(req)
+      fields,
+      image: {
+        path: original_path,
+        name: filename,
+        size,
+      },
+    } = await parse_form(req)
+
+
 
     const record = await Image.create({
       filename,
       size,
       upload_date: new Date(),
       uploader_id,
+      ...fields
     })
 
     const destination_path = path.join(uploads_directory_path, record._id.toString(), filename)
@@ -96,6 +110,7 @@ exports.get_image = async (req,res, next) => {
     const image = await Image.findById(image_id)
 
     if(!image) throw createHttpError(404, `Image not found in DB`)
+    enforce_restrictions(image, res)
 
     const image_path = path.join(
       uploads_directory_path,
@@ -129,6 +144,7 @@ exports.get_thumbnail = async (req,res, next) => {
     const image = await Image.findById(image_id)
 
     if(!image) throw createHttpError(404, `Image not found in DB`)
+    enforce_restrictions(image, res)
 
     const thumbnail_filename = get_thumbnail_filename(image.filename)
 
@@ -146,6 +162,44 @@ exports.get_thumbnail = async (req,res, next) => {
   catch (error) {
     next(error)
   }
+
+
+}
+
+exports.update_image = async (req, res, next) => {
+
+  try {
+
+    const { user } = res.locals
+    if (!user) throw createHttpError(403, `Unauthorized to delete image`)
+
+    const user_id = user._id || user.properties._id
+    const user_is_admin = user.isAdmin || user.properties.isAdmin
+
+    const image_id = get_image_id(req)
+    if (!image_id) throw createHttpError(400, `ID not present in request`)
+
+    const new_properties = req.body
+
+    if (!user_is_admin && user_id.toString() !== image.uploader_id) {
+      throw createHttpError(403, `Unauthorized to update image`)
+    }
+
+    let image = await Image.updateOne({ _id: image_id }, { $set: { ...new_properties}})
+  
+
+
+    console.log(`Image ${image_id} updated`);
+
+    res.send({ image_id
+})
+
+
+  }
+  catch (error) {
+    next(error)
+  }
+
 
 
 }
