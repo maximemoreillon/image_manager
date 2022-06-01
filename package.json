@@ -23,7 +23,7 @@
     "prom-client": "^14.0.1",
     "prometheus-api-metrics": "^3.2.1",
     "rimraf": "^3.0.2",
-    "sharp": "^0.30.3",
+    "sharp": "^0.30.5",
     "uuid": "^7.0.3"
   },
   "devDependencies": {
