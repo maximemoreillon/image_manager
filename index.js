@@ -2,10 +2,11 @@
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
-const {version, author} = require('./package.json')
+const apiMetrics = require('prometheus-api-metrics')
 const db = require('./db.js')
 const image_controller = require('./controllers/image.js')
 const images_router = require('./routes/images.js')
+const {version, author} = require('./package.json')
 const {uploads_directory_path} = require('./folder_config.js')
 const {migrate} = require('./migrations/folder_separated_images.js')
 
@@ -30,6 +31,7 @@ db.connect()
 const app = express()
 app.use(express.json())
 app.use(cors())
+app.use(apiMetrics())
 
 app.get('/', (req, res) => {
   res.send({
