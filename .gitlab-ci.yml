@@ -33,6 +33,7 @@ build:
 
 test:
   stage: test
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   tags:
     - dind
   before_script:
