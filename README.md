@@ -3,9 +3,11 @@
 ![pipeline](https://gitlab.com/moreillon_k8s/image_manager/badges/master/pipeline.svg)
 ![coverage](https://gitlab.com/moreillon_k8s/image_manager/badges/master/coverage.svg)
 
+[![dockeri.co](https://dockeri.co/image/moreillon/image-manager)](https://hub.docker.com/r/moreillon/image-manager)
+
 A simple service to upload and serve images
 
-Article regarding the design of the service on the [project page](https://articles.maximemoreillon.com/articles/112)
+More details about the design of the service available on the [project page](https://articles.maximemoreillon.com/articles/112)
 
 
 ## API
