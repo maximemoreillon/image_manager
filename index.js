@@ -19,7 +19,7 @@ dotenv.config()
 
 const {
   APP_PORT = 80,
-  AUTHENTICATION_API_URL = 'UNDEFINED',
+  IDENTIFICATION_URL = 'UNDEFINED',
 } = process.env
 
 db.connect()
@@ -44,7 +44,7 @@ app.get('/', (req, res) => {
       connected: db.get_connected(),
     },
     uploads_directory_path,
-    authentication_api_url: AUTHENTICATION_API_URL,
+    auth_url: IDENTIFICATION_URL,
   })
 })
 

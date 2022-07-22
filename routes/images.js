@@ -2,6 +2,8 @@ const express = require('express')
 const image_controller = require('../controllers/image.js')
 const auth = require('@moreillon/express_identification_middleware')
 
+
+
 const auth_options = { url: process.env.IDENTIFICATION_URL }
 const auth_options_lax = { ...auth_options, lax: true }
 
