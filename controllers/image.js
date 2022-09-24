@@ -50,15 +50,16 @@ exports.upload_image = async (req, res, next) => {
       },
     } = await parse_form(req)
 
-
-
-    const record = await Image.create({
+    const imageProperties = {
       filename,
       size,
       upload_date: new Date(),
       uploader_id,
       ...fields
-    })
+    }
+
+
+    const record = await Image.create(imageProperties)
 
     const destination_path = path.join(uploads_directory_path, record._id.toString(), filename)
 
@@ -73,6 +74,43 @@ exports.upload_image = async (req, res, next) => {
   }
 
 }
+
+exports.get_image_list = async (req, res, next) => {
+
+  try {
+
+    const { 
+      skip = 0, 
+      limit = 50, 
+      order = -1, 
+      sort = 'upload_date',
+      search,
+    } = req.query
+
+    const query = {}
+
+    if (search && search !== '') query.$text = { $search: search }
+
+    const items = await Image
+      .find(query)
+      .skip(Number(skip))
+      .sort({ [sort] : order })
+      .limit(Math.max(Number(limit), 0))
+
+    const total = await Image.countDocuments(query)
+
+    const response = { total, items }
+
+    res.send(response)
+
+  }
+  catch (error) {
+    next(error)
+  }
+
+
+}
+
 
 const save_views = async (req, image) => {
   // Increase view count
@@ -263,31 +301,3 @@ exports.get_image_details = async (req,res, next) => {
 
 }
 
-exports.get_image_list = async (req,res, next) => {
-
-  try {
-
-    const { skip = 0, limit = 50, order = -1, sort = 'upload_date'} = req.query
-    const query = {}
-    const sort_and_order = {}
-    sort_and_order[sort] = order
-
-    const items = await Image
-      .find(query)
-      .skip(Number(skip))
-      .sort(sort_and_order)
-      .limit(Math.max(Number(limit), 0))
-
-    const total = await Image.countDocuments(query)
-
-    const response = { total, items }
-
-    res.send(response)
-
-  }
-  catch (error) {
-    next(error)
-  }
-
-
-}
