@@ -18,8 +18,6 @@ var ImageSchema = new Schema({
   referers: { type: Array, default: [] },
 })
 
-ImageSchema.index({ '$**': 'text' })
-
 const Image = model('Image', ImageSchema)
 
 module.exports = Image
