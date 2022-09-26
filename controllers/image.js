@@ -92,12 +92,7 @@ exports.get_image_list = async (req, res, next) => {
     if (search && search !== '') {
       const regex = { $regex: search, $options: 'i' }
       const searchableProperties = ['filename', 'description']
-
-      query = {
-        ...query, // Use other existing filters that might have already been defined
-        $or: searchableProperties.map(p => ({ [p]: regex }))
-      }
-
+      query.$or = searchableProperties.map(p => ({ [p]: regex }))
     }
 
     const items = await Image
