@@ -1,9 +1,9 @@
 const mv = require('mv')
 const sharp = require('sharp')
 const path = require('path')
-const { uploads_directory_path } = require('./folder_config.js')
 const rimraf = require('rimraf')
 const formidable = require('formidable')
+const createHttpError = require('http-errors')
 
 exports.parse_form = (req) => new Promise((resolve, reject) => {
   const form = new formidable.IncomingForm()
