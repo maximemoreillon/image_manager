@@ -62,7 +62,7 @@ exports.upload_image = async (req, res, next) => {
   res.send(record)
 }
 
-exports.get_image_list = async (req, res, next) => {
+exports.get_image_list = async (req, res) => {
   const {
     skip = 0,
     limit = 50,
@@ -117,7 +117,7 @@ const save_views = async (req, image) => {
   await image.save()
 }
 
-exports.get_image = async (req, res, next) => {
+exports.get_image = async (req, res) => {
   const image_id = get_image_id(req)
 
   if (!image_id) throw createHttpError(400, `Image ID not present in request`)
@@ -140,7 +140,7 @@ exports.get_image = async (req, res, next) => {
   res.sendFile(image_path)
 }
 
-exports.get_thumbnail = async (req, res, next) => {
+exports.get_thumbnail = async (req, res) => {
   const image_id = get_image_id(req)
 
   if (!image_id) throw createHttpError(400, `Image ID not present in request`)
@@ -163,7 +163,7 @@ exports.get_thumbnail = async (req, res, next) => {
   res.sendFile(thumbnail_path)
 }
 
-exports.update_image = async (req, res, next) => {
+exports.update_image = async (req, res) => {
   const { user } = res.locals
   if (!user) throw createHttpError(403, `Unauthorized to delete image`)
 
@@ -188,7 +188,7 @@ exports.update_image = async (req, res, next) => {
   res.send({ image_id })
 }
 
-exports.delete_image = async (req, res, next) => {
+exports.delete_image = async (req, res) => {
   const { user } = res.locals
   if (!user) throw createHttpError(403, `Unauthorized to delete image`)
 
@@ -217,7 +217,7 @@ exports.delete_image = async (req, res, next) => {
   res.send({ image_id })
 }
 
-exports.get_image_details = async (req, res, next) => {
+exports.get_image_details = async (req, res) => {
   const image_id = get_image_id(req)
   if (!image_id) throw createHttpError(400, `ID not present in request`)
 
