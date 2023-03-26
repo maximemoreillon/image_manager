@@ -1,14 +1,14 @@
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: ${APPLICATION_NAME}
-# spec:
-#   storageClassName: manual
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 50Gi
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APPLICATION_NAME}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,22 +25,20 @@ spec:
         app: ${APPLICATION_NAME}
     spec:
       volumes:
-      - name: ${APPLICATION_NAME}
-        persistentVolumeClaim:
-          claimName: ${APPLICATION_NAME}
+        - name: ${APPLICATION_NAME}
+          persistentVolumeClaim:
+            claimName: ${APPLICATION_NAME}
       containers:
-      - name: ${APPLICATION_NAME}
-        image: ${CONTAINER_IMAGE_TAGGED}
-        ports:
-        - containerPort: 80
-        # Get environment variables from k8s secret
-        envFrom:
-        - secretRef:
-           name: environment-variables
-        # Mounth the image upload directory
-        volumeMounts:
-        - mountPath: "/usr/share/pv"
-          name: ${APPLICATION_NAME}
+        - name: ${APPLICATION_NAME}
+          image: ${CONTAINER_IMAGE_TAGGED}
+          ports:
+            - containerPort: 80
+          envFrom:
+            - secretRef:
+                name: environment-variables
+          volumeMounts:
+            - mountPath: /usr/share/pv
+              name: ${APPLICATION_NAME}
 ---
 apiVersion: v1
 kind: Service
@@ -51,7 +49,7 @@ spec:
   selector:
     app: ${APPLICATION_NAME}
   ports:
-  - port: 80
+    - port: 80
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -64,14 +62,14 @@ metadata:
     nginx/client_max_body_size: 5g
 spec:
   tls:
-  - hosts:
-    - ${K8S_INGRESS_DOMAIN}
-    secretName: ${APPLICATION_NAME} # Name of the secret, i.e. the certificates
+    - hosts:
+        - ${K8S_INGRESS_DOMAIN}
+      secretName: ${APPLICATION_NAME} # Name of the secret, i.e. the certificates
   rules:
-  - host: ${K8S_INGRESS_DOMAIN}
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: ${APPLICATION_NAME} # Name of the service, named after the app
-          servicePort: 80
+    - host: ${K8S_INGRESS_DOMAIN}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: ${APPLICATION_NAME} # Name of the service, named after the app
+              servicePort: 80
