@@ -1,46 +1,40 @@
-const request = require("supertest")
-const {expect} = require("chai")
-const {app} = require("../index.js")
-const axios = require('axios')
-const dotenv = require('dotenv')
+import request from "supertest"
+import { expect } from "chai"
+import { app } from "../index"
+import axios from "axios"
+import dotenv from "dotenv"
 
 dotenv.config()
 
 const {
-  LOGIN_URL,
+  LOGIN_URL = "http://users/auth/login",
   TEST_USER_USERNAME,
   TEST_USER_PASSWORD,
 } = process.env
 
-
-
-
 const login = async () => {
-  const body = {username: TEST_USER_USERNAME, password: TEST_USER_PASSWORD}
-  const {data: {jwt}} = await axios.post(LOGIN_URL,body)
+  const body = { username: TEST_USER_USERNAME, password: TEST_USER_PASSWORD }
+  const {
+    data: { jwt },
+  } = await axios.post(LOGIN_URL, body)
   return jwt
 }
 
-
-
-
 describe("/images", () => {
+  let jwt: string, image_id: string
 
-  let jwt, image_id
-
-  before( async () => {
+  before(async () => {
     // Silencing console
     //console.log = () => {}
     jwt = await login()
   })
 
   describe("POST /images", () => {
-
     it("Should allow posting an image", async () => {
-      const {status, body} = await request(app)
+      const { status, body } = await request(app)
         .post(`/images`)
-        .attach('image', 'test/example.png')
-        .set('Authorization', `Bearer ${jwt}`)
+        .attach("image", "test/example.png")
+        .set("Authorization", `Bearer ${jwt}`)
 
       image_id = body._id
 
@@ -49,60 +43,52 @@ describe("/images", () => {
   })
 
   describe("GET /images", () => {
-
     it("Should allow the query of images", async () => {
-      const {status, body} = await request(app)
+      const { status, body } = await request(app)
         .get(`/images`)
-        .set('Authorization', `Bearer ${jwt}`)
+        .set("Authorization", `Bearer ${jwt}`)
 
       expect(status).to.equal(200)
     })
   })
 
   describe("GET /images/:image_id", () => {
-
     it("Should allow the query of an image", async () => {
-      const {status, body} = await request(app)
+      const { status, body } = await request(app)
         .get(`/images/${image_id}`)
-        .set('Authorization', `Bearer ${jwt}`)
+        .set("Authorization", `Bearer ${jwt}`)
 
       expect(status).to.equal(200)
     })
   })
 
   describe("GET /images/:image_id/thumbnail", () => {
-
     it("Should allow the query of an image thumbnail", async () => {
-      const {status, body} = await request(app)
+      const { status, body } = await request(app)
         .get(`/images/${image_id}/thumbnail`)
-        .set('Authorization', `Bearer ${jwt}`)
+        .set("Authorization", `Bearer ${jwt}`)
 
       expect(status).to.equal(200)
     })
   })
 
   describe("GET /images/:image_id/details", () => {
-
     it("Should allow the query of details about an image", async () => {
-      const {status, body} = await request(app)
+      const { status, body } = await request(app)
         .get(`/images/${image_id}/details`)
-        .set('Authorization', `Bearer ${jwt}`)
+        .set("Authorization", `Bearer ${jwt}`)
 
       expect(status).to.equal(200)
     })
   })
 
   describe("DELETE /images/:image_id", () => {
-
     it("Should allow the deletion of an image", async () => {
-      const {status, body} = await request(app)
+      const { status, body } = await request(app)
         .delete(`/images/${image_id}`)
-        .set('Authorization', `Bearer ${jwt}`)
+        .set("Authorization", `Bearer ${jwt}`)
 
       expect(status).to.equal(200)
     })
   })
-
-
-
 })

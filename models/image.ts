@@ -1,7 +1,6 @@
-const {Schema, model} = require("mongoose")
+import { Schema, model } from "mongoose"
 
 var ImageSchema = new Schema({
-
   filename: String,
   path: String, // Legacy, renamed into filename above
 
@@ -18,6 +17,6 @@ var ImageSchema = new Schema({
   referers: { type: Array, default: [] },
 })
 
-const Image = model('Image', ImageSchema)
+const Image = model("Image", ImageSchema)
 
-module.exports = Image
+export default Image

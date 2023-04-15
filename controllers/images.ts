@@ -1,43 +1,45 @@
-const dotenv = require("dotenv")
-const path = require("path")
-const { uploads_directory_path } = require("../folder_config.js")
-const Image = require("../models/image.js")
-const createHttpError = require("http-errors")
-const {
+import dotenv from "dotenv"
+import path from "path"
+import { uploads_directory_path } from "../folder_config"
+import Image from "../models/image"
+import createHttpError from "http-errors"
+import {
   move_file,
   get_thumbnail_filename,
   create_image_thumbnail,
   delete_folder,
   parse_form,
-} = require("../utils.js")
+} from "../utils"
+import { Request, Response } from "express"
 
 dotenv.config()
 
-const enforce_restrictions = (image, res) => {
+// TODO: get type from Mongoose schema or vice versa
+const enforce_restrictions = (image: any, res: Response) => {
   if (!image.restricted) return
   const { user } = res.locals
 
   if (!user) throw createHttpError(403, `Access to this image is restricted`)
 
-  const user_id = user._id || user.properties._id
-  const user_is_admin = user.isAdmin || user.properties.isAdmin
+  const user_id = user._id
+  const user_is_admin = user.isAdmin
 
   if (!user_is_admin && user_id.toString() !== image.uploader_id) {
     throw createHttpError(403, `Access to this image is restricted`)
   }
 }
 
-const get_image_id = (req) => {
+const get_image_id = (req: Request) => {
   return req.params.id || req.params.image_id || req.query.id
 }
 
-exports.upload_image = async (req, res, next) => {
+export const upload_image = async (req: Request, res: Response) => {
   const uploader_id = res.locals.user?._id || res.locals.user?.properties._id
 
   const {
     fields,
     image: { path: original_path, name: filename, size },
-  } = await parse_form(req)
+  } = (await parse_form(req)) as any
 
   const imageProperties = {
     filename,
@@ -62,16 +64,16 @@ exports.upload_image = async (req, res, next) => {
   res.send(record)
 }
 
-exports.get_image_list = async (req, res) => {
+export const get_image_list = async (req: Request, res: Response) => {
   const {
     skip = 0,
     limit = 50,
     order = -1,
     sort = "upload_date",
     search,
-  } = req.query
+  } = req.query as any
 
-  const query = {}
+  const query: any = {}
 
   if (search && search !== "") {
     const regex = { $regex: search, $options: "i" }
@@ -91,7 +93,7 @@ exports.get_image_list = async (req, res) => {
   res.send(response)
 }
 
-const save_views = async (req, image) => {
+const save_views = async (req: Request, image: any) => {
   // Increase view count
   if (image.views) image.views += 1
   else image.views = 1
@@ -103,7 +105,9 @@ const save_views = async (req, image) => {
   const referer_url = req.get("Referrer")
 
   if (referer_url) {
-    let found_referer = image.referers.find(({ url }) => url === referer_url)
+    let found_referer = image.referers.find(
+      ({ url }: { url: string }) => url === referer_url
+    )
 
     if (found_referer) found_referer.last_request = new Date()
     else {
@@ -117,7 +121,7 @@ const save_views = async (req, image) => {
   await image.save()
 }
 
-exports.get_image = async (req, res) => {
+export const get_image = async (req: Request, res: Response) => {
   const image_id = get_image_id(req)
 
   if (!image_id) throw createHttpError(400, `Image ID not present in request`)
@@ -140,7 +144,7 @@ exports.get_image = async (req, res) => {
   res.sendFile(image_path)
 }
 
-exports.get_thumbnail = async (req, res) => {
+export const get_thumbnail = async (req: Request, res: Response) => {
   const image_id = get_image_id(req)
 
   if (!image_id) throw createHttpError(400, `Image ID not present in request`)
@@ -163,7 +167,7 @@ exports.get_thumbnail = async (req, res) => {
   res.sendFile(thumbnail_path)
 }
 
-exports.update_image = async (req, res) => {
+export const update_image = async (req: Request, res: Response) => {
   const { user } = res.locals
   if (!user) throw createHttpError(403, `Unauthorized to delete image`)
 
@@ -188,7 +192,7 @@ exports.update_image = async (req, res) => {
   res.send({ image_id })
 }
 
-exports.delete_image = async (req, res) => {
+export const delete_image = async (req: Request, res: Response) => {
   const { user } = res.locals
   if (!user) throw createHttpError(403, `Unauthorized to delete image`)
 
@@ -217,7 +221,7 @@ exports.delete_image = async (req, res) => {
   res.send({ image_id })
 }
 
-exports.get_image_details = async (req, res) => {
+export const get_image_details = async (req: Request, res: Response) => {
   const image_id = get_image_id(req)
   if (!image_id) throw createHttpError(400, `ID not present in request`)
 
