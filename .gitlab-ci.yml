@@ -9,8 +9,7 @@ variables:
   CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
   CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:latest
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
-  K8S_INGRESS_DOMAIN: img.maximemoreillon.com
-
+  K8S_INGRESS_HOST: img.maximemoreillon.com
 
 # Needed for Docker in docker build
 image: moreillon/ci-dind
@@ -62,7 +61,6 @@ test:
       moreillon/user-manager-mongoose
     - sleep 120 # Wait for containers to be available
 
-
   script:
     # Run tests
     - >
@@ -83,8 +81,6 @@ test:
     # Pushing
     - docker push ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_LATEST}
-
-
 
 deploy:
   stage: deploy

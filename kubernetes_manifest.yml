@@ -51,11 +51,10 @@ spec:
   ports:
     - port: 80
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ${APPLICATION_NAME} # Name of the ingress, named after the application
-  annotations:
+  name: ${APPLICATION_NAME} 
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-body-size: "5g"
@@ -63,13 +62,17 @@ metadata:
 spec:
   tls:
     - hosts:
-        - ${K8S_INGRESS_DOMAIN}
-      secretName: ${APPLICATION_NAME} # Name of the secret, i.e. the certificates
+        - ${K8S_INGRESS_HOST}
+      secretName: ${APPLICATION_NAME} 
   rules:
-    - host: ${K8S_INGRESS_DOMAIN}
+    - host: ${K8S_INGRESS_HOST}
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: ${APPLICATION_NAME} # Name of the service, named after the app
-              servicePort: 80
+              service:
+                name: ${APPLICATION_NAME}
+                port:
+                  number: 80
+
