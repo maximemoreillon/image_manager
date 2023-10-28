@@ -1,9 +1,7 @@
 import path from "path"
-import dotenv from "dotenv"
 
-dotenv.config()
+export const { UPLOADS_DIRECTORY = "/usr/share/pv" } = process.env
 
-export const uploads_directory_path =
-  process.env.UPLOADS_DIRECTORY ?? "/usr/share/pv"
+export const uploads_directory_path = UPLOADS_DIRECTORY
 
 export const trash_directory_path = path.join(uploads_directory_path, "trash")

@@ -1,4 +1,3 @@
-import dotenv from "dotenv"
 import path from "path"
 import { uploads_directory_path } from "../folder_config"
 import Image from "../models/image"
@@ -11,8 +10,6 @@ import {
   parse_form,
 } from "../utils"
 import { Request, Response } from "express"
-
-dotenv.config()
 
 // TODO: get type from Mongoose schema or vice versa
 const enforce_restrictions = (image: any, res: Response) => {
@@ -139,8 +136,6 @@ export const get_image = async (req: Request, res: Response) => {
 
   await save_views(req, image)
 
-  console.log(`Image at ${image_path} queried`)
-
   res.sendFile(image_path)
 }
 
@@ -161,8 +156,6 @@ export const get_thumbnail = async (req: Request, res: Response) => {
     image._id.toString(),
     thumbnail_filename
   )
-
-  console.log(`Thumbnail of image ${image_id} queried`)
 
   res.sendFile(thumbnail_path)
 }

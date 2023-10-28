@@ -1,7 +1,8 @@
+import dotenv from "dotenv"
+dotenv.config()
 import express from "express"
 import "express-async-errors"
 import cors from "cors"
-import dotenv from "dotenv"
 import apiMetrics from "prometheus-api-metrics"
 import {
   MONGODB_DB,
@@ -14,8 +15,6 @@ import images_router from "./routes/images"
 import { version, author } from "./package.json"
 import { uploads_directory_path } from "./folder_config"
 import { Request, Response, NextFunction } from "express"
-
-dotenv.config()
 
 const { APP_PORT = 80, IDENTIFICATION_URL = "UNDEFINED" } = process.env
 

@@ -1,7 +1,4 @@
 import mongoose from "mongoose"
-import dotenv from "dotenv"
-
-dotenv.config()
 
 export const { MONGODB_DB = "images", MONGODB_URL = "mongodb://mongo" } =
   process.env
@@ -14,7 +11,7 @@ const mongodb_options = {
 let mongodb_connected = false
 
 export const connect = () =>
-  new Promise((resolve, reject) => {
+  new Promise((resolve) => {
     console.log("[MongoDB] Attempting connection...")
     const connection_url = `${MONGODB_URL}/${MONGODB_DB}`
     mongoose
@@ -25,6 +22,7 @@ export const connect = () =>
       })
       .catch((error) => {
         console.log("[Mongoose] Initial connection failed")
+        console.error(error)
         setTimeout(connect, 5000)
       })
   })

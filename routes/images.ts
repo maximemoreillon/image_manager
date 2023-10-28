@@ -13,7 +13,6 @@ import auth from "@moreillon/express_identification_middleware"
 const auth_options = { url: process.env.IDENTIFICATION_URL }
 const auth_options_lax = { ...auth_options, lax: true }
 
-// Register the middleware
 const router = express.Router()
 
 router
