@@ -17,12 +17,12 @@
     "dotenv": "^8.6.0",
     "express": "^4.17.3",
     "express-async-errors": "^3.1.1",
+    "express-prom-bundle": "^6.6.0",
     "formidable": "^1.2.6",
     "http-errors": "^2.0.0",
     "mongoose": "^5.13.14",
     "mv": "^2.1.1",
-    "prom-client": "^14.0.1",
-    "prometheus-api-metrics": "^3.2.1",
+    "prom-client": "^15.0.0",
     "rimraf": "^3.0.2",
     "sharp": "^0.30.3",
     "uuid": "^7.0.3"
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@types/chai": "^4.3.4",
     "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.21",
     "@types/formidable": "^2.0.5",
     "@types/mocha": "^10.0.1",
     "@types/mv": "^2.1.2",

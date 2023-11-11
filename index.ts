@@ -3,7 +3,7 @@ dotenv.config()
 import express from "express"
 import "express-async-errors"
 import cors from "cors"
-import apiMetrics from "prometheus-api-metrics"
+import promBundle from "express-prom-bundle"
 import {
   MONGODB_DB,
   MONGODB_URL,
@@ -17,14 +17,14 @@ import { uploads_directory_path } from "./folder_config"
 import { Request, Response, NextFunction } from "express"
 
 const { APP_PORT = 80, IDENTIFICATION_URL = "UNDEFINED" } = process.env
+const promOptions = { includeMethod: true, includePath: true }
 
 db_connect()
 
 export const app = express()
 app.use(express.json())
 app.use(cors())
-app.use(apiMetrics())
-
+app.use(promBundle(promOptions))
 app.get("/", (req, res) => {
   res.send({
     application_name: "Image manager API",
