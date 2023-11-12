@@ -4,8 +4,7 @@ import path from "path"
 import formidable from "formidable"
 import createHttpError from "http-errors"
 import { Request } from "express"
-// @ts-ignore
-import rimraf from "rimraf"
+import { rimraf } from "rimraf"
 
 export const parse_form = (req: Request) =>
   new Promise((resolve, reject) => {
@@ -48,10 +47,4 @@ export const create_image_thumbnail = async (image_path: string) => {
     .toFile(thumbnail_path)
 }
 
-export const delete_folder = (folder_path: string) =>
-  new Promise((resolve, reject) => {
-    rimraf(folder_path, (error: any) => {
-      if (error) reject(error)
-      resolve(null)
-    })
-  })
+export const delete_folder = (folder_path: string) => rimraf(folder_path)
