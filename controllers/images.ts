@@ -15,14 +15,10 @@ import { Request, Response } from "express"
 const enforce_restrictions = (image: any, res: Response) => {
   if (!image.restricted) return
   const { user } = res.locals
+  const { _id: user_id, isAdmin: user_is_admin } = user
 
-  if (!user) throw createHttpError(403, `Access to this image is restricted`)
-
-  const user_id = user._id
-  const user_is_admin = user.isAdmin
-
-  if (!user_is_admin && user_id.toString() !== image.uploader_id) {
-    throw createHttpError(403, `Access to this image is restricted`)
+  if (!user || (!user_is_admin && user_id.toString() !== image.uploader_id)) {
+    throw createHttpError(403, `Access to image ${image._id} is restricted`)
   }
 }
 
