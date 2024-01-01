@@ -1,21 +1,36 @@
 import mongoose from "mongoose"
 
-export const { MONGODB_DB = "images", MONGODB_URL = "mongodb://mongo" } =
-  process.env
+export const {
+  MONGODB_CONNECTION_STRING,
+  MONGODB_PROTOCOL = "mongodb",
+  MONGODB_USERNAME,
+  MONGODB_PASSWORD,
+  MONGODB_HOST = "mongo",
+  MONGODB_PORT,
+  MONGODB_DB = "images",
+  MONGODB_OPTIONS = "",
+} = process.env
 
 const mongodb_options = {
   useUnifiedTopology: true,
   useNewUrlParser: true,
 }
 
+const mongodbPort = MONGODB_PORT ? `:${MONGODB_PORT}` : ""
+
+export const connectionString =
+  MONGODB_CONNECTION_STRING ||
+  (MONGODB_USERNAME && MONGODB_PASSWORD
+    ? `${MONGODB_PROTOCOL}://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}${mongodbPort}/${MONGODB_DB}${MONGODB_OPTIONS}`
+    : `${MONGODB_PROTOCOL}://${MONGODB_HOST}${mongodbPort}/${MONGODB_DB}${MONGODB_OPTIONS}`)
+
 let mongodb_connected = false
 
 export const connect = () =>
   new Promise((resolve) => {
     console.log("[MongoDB] Attempting connection...")
-    const connection_url = `${MONGODB_URL}/${MONGODB_DB}`
     mongoose
-      .connect(connection_url, mongodb_options)
+      .connect(connectionString, mongodb_options)
       .then(() => {
         resolve(null)
         console.log("[Mongoose] Initial connection successful")
@@ -37,4 +52,4 @@ db.once("open", () => {
   mongodb_connected = true
 })
 
-export const get_connected = () => mongodb_connected
+export const get_connected = () => mongoose.connection.readyState

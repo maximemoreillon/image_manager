@@ -11,7 +11,6 @@ variables:
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
   K8S_INGRESS_HOST: img.maximemoreillon.com
 
-# Needed for Docker in docker build
 image: moreillon/ci-dind
 services:
   - name: docker:24.0.7-dind
@@ -23,10 +22,8 @@ build:
   tags:
     - dind
   before_script:
-    # Docker hub login
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
   script:
-    # Build and push
     - docker build -t ${CONTAINER_IMAGE_TEST} .
     - docker push ${CONTAINER_IMAGE_TEST}
 
@@ -56,29 +53,28 @@ test:
       --name tdd-um
       --network tdd
       --hostname tdd-um
-      -e MONGODB_URL=mongodb://tdd-db
+      -e MONGODB_HOST=tdd-db
       -e JWT_SECRET=keyboardcat
-      moreillon/user-manager-mongoose
+      moreillon/user-manager-mongoose:v5.2.5
     - sleep 120 # Wait for containers to be available
 
   script:
-    # Run tests
     - >
       docker run
       --rm
       --name tdd
       --network tdd
-      -e MONGODB_URL=mongodb://tdd-db
+      -e MONGODB_HOST=tdd-db
       -e IDENTIFICATION_URL=http://tdd-um/users/self
       -e LOGIN_URL=http://tdd-um/auth/login
       -e TEST_USER_USERNAME=admin
       -e TEST_USER_PASSWORD=admin
       ${CONTAINER_IMAGE_TEST}
       npm run coverage
-    # Tagging
+
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_LATEST}
-    # Pushing
+
     - docker push ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_LATEST}
 

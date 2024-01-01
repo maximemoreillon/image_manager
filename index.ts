@@ -5,9 +5,8 @@ import "express-async-errors"
 import cors from "cors"
 import promBundle from "express-prom-bundle"
 import {
-  MONGODB_DB,
-  MONGODB_URL,
   get_connected,
+  connectionString as dbConnectionString,
   connect as db_connect,
 } from "./db"
 import { get_image } from "./controllers/images"
@@ -31,8 +30,7 @@ app.get("/", (req, res) => {
     author,
     version,
     mongodb: {
-      url: MONGODB_DB,
-      db: MONGODB_URL,
+      connection_string: dbConnectionString?.replace(/:.*@/, "://***:***@"),
       connected: get_connected(),
     },
     uploads_directory_path,
