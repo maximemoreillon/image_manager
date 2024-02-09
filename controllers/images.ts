@@ -30,6 +30,8 @@ export const upload_image = async (req: Request, res: Response) => {
     image: { filepath: uploadTempPath, originalFilename: filename, size },
   }: any = await parse_form(req)
 
+  console.log({ fields })
+
   const imageProperties = {
     filename,
     size,
@@ -135,9 +137,13 @@ export const update_image = async (req: Request, res: Response) => {
     throw createHttpError(403, `Unauthorized to update image`)
   }
 
-  await Image.updateOne({ _id: image_id }, { $set: { ...new_properties } })
+  const updatedImage = await Image.findOneAndUpdate(
+    { _id: image_id },
+    { $set: { ...new_properties } },
+    { new: true }
+  )
 
-  res.send({ image_id })
+  res.send(updatedImage)
 }
 
 export const delete_image = async (req: Request, res: Response) => {

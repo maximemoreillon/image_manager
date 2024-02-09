@@ -33,6 +33,7 @@ describe("/images", () => {
     it("Should allow posting an image", async () => {
       const { status, body } = await request(app)
         .post(`/images`)
+        .field("description", "logo")
         .attach("image", "test/example.png")
         .set("Authorization", `Bearer ${jwt}`)
 
@@ -78,7 +79,22 @@ describe("/images", () => {
         .get(`/images/${image_id}/details`)
         .set("Authorization", `Bearer ${jwt}`)
 
+      console.log(body)
+
       expect(status).to.equal(200)
+      expect(body.description).to.equal("logo")
+    })
+  })
+
+  describe("PATCH /images/:image_id", () => {
+    it("Should allow the update of details about an image", async () => {
+      const { status, body } = await request(app)
+        .patch(`/images/${image_id}`)
+        .send({ description: "moreillon_logo" })
+        .set("Authorization", `Bearer ${jwt}`)
+
+      expect(status).to.equal(200)
+      expect(body.description).to.equal("moreillon_logo")
     })
   })
 

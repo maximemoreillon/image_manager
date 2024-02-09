@@ -21,7 +21,7 @@ export const parse_form = async (req: Request) =>
 
       if (!image) reject(createHttpError(400, `Image not present in request`))
 
-      resolve({ image, fieldsFormatted })
+      resolve({ image, fields: fieldsFormatted })
     })
   })
 
