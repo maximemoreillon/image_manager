@@ -2,6 +2,7 @@ import {
   S3Client,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3"
 import path from "path"
@@ -9,6 +10,7 @@ import { Response } from "express"
 import { ImageType } from "../models/image"
 import { readFileSync } from "fs"
 import { createThumbnailData, get_thumbnail_filename } from "../utils"
+import createHttpError from "http-errors"
 
 export const {
   S3_REGION,
@@ -100,8 +102,19 @@ export const streamFileFromS3 = async (
   )
 }
 
-export const deleteFileFromS3 = async (Key: string) => {
+export const deleteFileFromS3 = async (image: ImageType) => {
   if (!S3_BUCKET || !s3Client) throw "S3 not configured"
-  const options = { Key, Bucket: S3_BUCKET }
-  await s3Client.send(new DeleteObjectCommand(options))
+  const Prefix = image._id.toString()
+
+  const objectList = await s3Client.send(
+    new ListObjectsCommand({ Bucket: S3_BUCKET, Prefix })
+  )
+
+  if (!objectList || !objectList.Contents)
+    throw createHttpError(500, `${Prefix} has no content`)
+
+  for await (const { Key } of objectList.Contents) {
+    const options = { Key, Bucket: S3_BUCKET }
+    await s3Client.send(new DeleteObjectCommand(options))
+  }
 }

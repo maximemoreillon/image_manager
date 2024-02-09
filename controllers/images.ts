@@ -7,7 +7,12 @@ import {
   saveImageLocally,
   sendLocalImage,
 } from "../storage/local"
-import { s3Client, storeImageToS3, streamFileFromS3 } from "../storage/s3"
+import {
+  deleteFileFromS3,
+  s3Client,
+  storeImageToS3,
+  streamFileFromS3,
+} from "../storage/s3"
 
 const enforce_restrictions = (image: ImageType, res: Response) => {
   if (!image.restricted) return
@@ -162,7 +167,8 @@ export const delete_image = async (req: Request, res: Response) => {
     throw createHttpError(403, `Unauthorized to delete image`)
   }
 
-  deleteLocalImage(image)
+  if (s3Client) deleteFileFromS3(image)
+  else deleteLocalImage(image)
 
   await image.remove()
 
