@@ -1,5 +1,9 @@
 import dotenv from "dotenv"
 dotenv.config()
+
+import { version, author } from "./package.json"
+console.log(`Image manager v${version}`)
+
 import express from "express"
 import "express-async-errors"
 import cors from "cors"
@@ -11,9 +15,9 @@ import {
 } from "./db"
 import { get_image } from "./controllers/images"
 import images_router from "./routes/images"
-import { version, author } from "./package.json"
 import { uploads_directory_path } from "./folder_config"
 import { Request, Response, NextFunction } from "express"
+import { s3Client, S3_BUCKET } from "./storage/s3"
 
 const { APP_PORT = 80, IDENTIFICATION_URL } = process.env
 const promOptions = { includeMethod: true, includePath: true }
@@ -33,9 +37,13 @@ app.get("/", (req, res) => {
       connection_string: dbConnectionString,
       connected: get_connected(),
     },
-    storage: {
-      uploads_directory_path,
-    },
+    storage: s3Client
+      ? {
+          bucket: S3_BUCKET,
+        }
+      : {
+          uploads_directory_path,
+        },
     auth: { identification_url: IDENTIFICATION_URL },
   })
 })
@@ -55,5 +63,5 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
 
 // Start server
 app.listen(APP_PORT, () => {
-  console.log(`Image manager API v${version} listening on port ${APP_PORT}`)
+  console.log(`[Express] listening on port ${APP_PORT}`)
 })

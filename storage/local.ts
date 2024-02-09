@@ -1,10 +1,21 @@
 import path from "path"
-import { create_image_thumbnail } from "../utils"
 import { uploads_directory_path } from "../folder_config"
 import { Response } from "express"
 import { rimrafSync } from "rimraf"
 import { ImageType } from "../models/image"
+import { get_thumbnail_filename, createThumbnailData } from "../utils"
 import mv from "mv"
+
+const create_image_thumbnail = async (image_path: string) => {
+  const folder_path = path.dirname(image_path)
+  const image_filename = path.basename(image_path)
+  const thumbnail_filename = get_thumbnail_filename(image_filename)
+  const thumbnail_path = path.resolve(folder_path, thumbnail_filename)
+
+  const thumbnailData = await createThumbnailData(image_path)
+
+  await thumbnailData.toFile(thumbnail_path)
+}
 
 const move_file = (original_path: string, destination_path: string) =>
   new Promise((resolve, reject) => {

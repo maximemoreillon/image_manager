@@ -7,6 +7,7 @@ import {
   saveImageLocally,
   sendLocalImage,
 } from "../storage/local"
+import { s3Client, storeImageToS3, streamFileFromS3 } from "../storage/s3"
 
 const enforce_restrictions = (image: ImageType, res: Response) => {
   if (!image.restricted) return
@@ -39,7 +40,8 @@ export const upload_image = async (req: Request, res: Response) => {
 
   const record = await Image.create(imageProperties)
 
-  await saveImageLocally(uploadTempPath, record)
+  if (s3Client) await storeImageToS3(uploadTempPath, record)
+  else await saveImageLocally(uploadTempPath, record)
 
   res.send(record)
 }
@@ -93,7 +95,8 @@ export const get_image = async (req: Request, res: Response) => {
   if (!image) throw createHttpError(404, `Image not found in DB`)
   enforce_restrictions(image, res)
 
-  sendLocalImage(res, image)
+  if (s3Client) await streamFileFromS3(res, image)
+  else await sendLocalImage(res, image)
 
   save_views(req, image)
 }
@@ -110,7 +113,8 @@ export const get_thumbnail = async (req: Request, res: Response) => {
 
   const thumbnail_filename = get_thumbnail_filename(image.filename)
 
-  sendLocalImage(res, image, thumbnail_filename)
+  if (s3Client) await streamFileFromS3(res, image, thumbnail_filename)
+  else await sendLocalImage(res, image, thumbnail_filename)
 }
 
 export const update_image = async (req: Request, res: Response) => {
