@@ -6,7 +6,7 @@ import cors from "cors"
 import promBundle from "express-prom-bundle"
 import {
   get_connected,
-  connectionString as dbConnectionString,
+  redactedConnectionString as dbConnectionString,
   connect as db_connect,
 } from "./db"
 import { get_image } from "./controllers/images"
@@ -15,7 +15,7 @@ import { version, author } from "./package.json"
 import { uploads_directory_path } from "./folder_config"
 import { Request, Response, NextFunction } from "express"
 
-const { APP_PORT = 80, IDENTIFICATION_URL = "UNDEFINED" } = process.env
+const { APP_PORT = 80, IDENTIFICATION_URL } = process.env
 const promOptions = { includeMethod: true, includePath: true }
 
 db_connect()
@@ -30,11 +30,13 @@ app.get("/", (req, res) => {
     author,
     version,
     mongodb: {
-      connection_string: dbConnectionString?.replace(/:.*@/, "://***:***@"),
+      connection_string: dbConnectionString,
       connected: get_connected(),
     },
-    uploads_directory_path,
-    auth_url: IDENTIFICATION_URL,
+    storage: {
+      uploads_directory_path,
+    },
+    auth: { identification_url: IDENTIFICATION_URL },
   })
 })
 

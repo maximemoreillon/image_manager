@@ -24,7 +24,10 @@ export const connectionString =
     ? `${MONGODB_PROTOCOL}://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}${mongodbPort}/${MONGODB_DB}${MONGODB_OPTIONS}`
     : `${MONGODB_PROTOCOL}://${MONGODB_HOST}${mongodbPort}/${MONGODB_DB}${MONGODB_OPTIONS}`)
 
-let mongodb_connected = false
+export const redactedConnectionString = connectionString.replace(
+  /:.*@/,
+  "://***:***@"
+)
 
 export const connect = () =>
   new Promise((resolve) => {
@@ -45,11 +48,9 @@ export const connect = () =>
 const db = mongoose.connection
 db.on("error", () => {
   console.log("[Mongoose] Connection lost")
-  mongodb_connected = false
 })
 db.once("open", () => {
   console.log("[Mongoose] Connection established")
-  mongodb_connected = true
 })
 
 export const get_connected = () => mongoose.connection.readyState

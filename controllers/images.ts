@@ -1,18 +1,14 @@
-import path from "path"
-import { uploads_directory_path } from "../folder_config"
-import Image from "../models/image"
+import Image, { ImageType } from "../models/image"
 import createHttpError from "http-errors"
-import {
-  move_file,
-  get_thumbnail_filename,
-  create_image_thumbnail,
-  delete_folder,
-  parse_form,
-} from "../utils"
+import { get_thumbnail_filename, parse_form } from "../utils"
 import { Request, Response } from "express"
+import {
+  deleteLocalImage,
+  saveImageLocally,
+  sendLocalImage,
+} from "../storage/local"
 
-// TODO: get type from Mongoose schema or vice versa
-const enforce_restrictions = (image: any, res: Response) => {
+const enforce_restrictions = (image: ImageType, res: Response) => {
   if (!image.restricted) return
   const { user } = res.locals
   const { _id: user_id, isAdmin: user_is_admin } = user
@@ -22,17 +18,16 @@ const enforce_restrictions = (image: any, res: Response) => {
   }
 }
 
-const get_image_id = (req: Request) => {
-  return req.params.id || req.params.image_id || req.query.id
-}
+const get_image_id = (req: Request) =>
+  req.params.id || req.params.image_id || req.query.id
 
 export const upload_image = async (req: Request, res: Response) => {
   const uploader_id = res.locals.user?._id || res.locals.user?.properties._id
 
   const {
     fields,
-    image: { path: original_path, name: filename, size },
-  } = (await parse_form(req)) as any
+    image: { filepath: uploadTempPath, originalFilename: filename, size },
+  }: any = await parse_form(req)
 
   const imageProperties = {
     filename,
@@ -44,16 +39,8 @@ export const upload_image = async (req: Request, res: Response) => {
 
   const record = await Image.create(imageProperties)
 
-  const destination_path = path.join(
-    uploads_directory_path,
-    record._id.toString(),
-    filename
-  )
+  await saveImageLocally(uploadTempPath, record)
 
-  await move_file(original_path, destination_path)
-  await create_image_thumbnail(destination_path)
-
-  console.log(`Image successfully saved as ${destination_path}`)
   res.send(record)
 }
 
@@ -64,7 +51,7 @@ export const get_image_list = async (req: Request, res: Response) => {
     order = -1,
     sort = "upload_date",
     search,
-  } = req.query as any
+  }: any = req.query
 
   const query: any = {}
 
@@ -86,7 +73,93 @@ export const get_image_list = async (req: Request, res: Response) => {
   res.send(response)
 }
 
-const save_views = async (req: Request, image: any) => {
+export const get_image_details = async (req: Request, res: Response) => {
+  const image_id = get_image_id(req)
+  if (!image_id) throw createHttpError(400, `ID not present in request`)
+
+  const image = await Image.findById(image_id)
+  if (!image) throw createHttpError(404, `Image not found in DB`)
+
+  res.send(image)
+}
+
+export const get_image = async (req: Request, res: Response) => {
+  const image_id = get_image_id(req)
+
+  if (!image_id) throw createHttpError(400, `Image ID not present in request`)
+
+  const image = await Image.findById(image_id)
+
+  if (!image) throw createHttpError(404, `Image not found in DB`)
+  enforce_restrictions(image, res)
+
+  sendLocalImage(res, image)
+
+  save_views(req, image)
+}
+
+export const get_thumbnail = async (req: Request, res: Response) => {
+  const image_id = get_image_id(req)
+
+  if (!image_id) throw createHttpError(400, `Image ID not present in request`)
+
+  const image = await Image.findById(image_id)
+
+  if (!image) throw createHttpError(404, `Image not found in DB`)
+  enforce_restrictions(image, res)
+
+  const thumbnail_filename = get_thumbnail_filename(image.filename)
+
+  sendLocalImage(res, image, thumbnail_filename)
+}
+
+export const update_image = async (req: Request, res: Response) => {
+  const { user } = res.locals
+  const image_id = req.params.id
+  if (!user) throw createHttpError(403, `Unauthorized to delete image`)
+
+  const user_id = user._id || user.properties._id
+  const user_is_admin = user.isAdmin || user.properties.isAdmin
+
+  if (!image_id) throw createHttpError(400, `ID not present in request`)
+
+  const new_properties = req.body
+
+  const image = await Image.findById(image_id)
+
+  if (!user_is_admin && user_id.toString() !== image.uploader_id) {
+    throw createHttpError(403, `Unauthorized to update image`)
+  }
+
+  await Image.updateOne({ _id: image_id }, { $set: { ...new_properties } })
+
+  res.send({ image_id })
+}
+
+export const delete_image = async (req: Request, res: Response) => {
+  const { user } = res.locals
+  if (!user) throw createHttpError(403, `Unauthorized to delete image`)
+
+  const user_id = user._id || user.properties._id
+  const user_is_admin = user.isAdmin || user.properties.isAdmin
+
+  const image_id = get_image_id(req)
+  if (!image_id) throw createHttpError(400, `ID not present in request`)
+
+  const image = await Image.findById(image_id)
+
+  if (!user_is_admin && user_id.toString() !== image.uploader_id) {
+    throw createHttpError(403, `Unauthorized to delete image`)
+  }
+
+  deleteLocalImage(image)
+
+  await image.remove()
+
+  res.send({ image_id })
+}
+
+const save_views = async (req: Request, image: ImageType) => {
   // Increase view count
   if (image.views) image.views += 1
   else image.views = 1
@@ -112,111 +185,4 @@ const save_views = async (req: Request, image: any) => {
   }
 
   await image.save()
-}
-
-export const get_image = async (req: Request, res: Response) => {
-  const image_id = get_image_id(req)
-
-  if (!image_id) throw createHttpError(400, `Image ID not present in request`)
-
-  const image = await Image.findById(image_id)
-
-  if (!image) throw createHttpError(404, `Image not found in DB`)
-  enforce_restrictions(image, res)
-
-  const image_path = path.join(
-    uploads_directory_path,
-    image._id.toString(),
-    image.filename
-  )
-
-  await save_views(req, image)
-
-  res.sendFile(image_path)
-}
-
-export const get_thumbnail = async (req: Request, res: Response) => {
-  const image_id = get_image_id(req)
-
-  if (!image_id) throw createHttpError(400, `Image ID not present in request`)
-
-  const image = await Image.findById(image_id)
-
-  if (!image) throw createHttpError(404, `Image not found in DB`)
-  enforce_restrictions(image, res)
-
-  const thumbnail_filename = get_thumbnail_filename(image.filename)
-
-  const thumbnail_path = path.join(
-    uploads_directory_path,
-    image._id.toString(),
-    thumbnail_filename
-  )
-
-  res.sendFile(thumbnail_path)
-}
-
-export const update_image = async (req: Request, res: Response) => {
-  const { user } = res.locals
-  if (!user) throw createHttpError(403, `Unauthorized to delete image`)
-
-  const user_id = user._id || user.properties._id
-  const user_is_admin = user.isAdmin || user.properties.isAdmin
-
-  const image_id = get_image_id(req)
-  if (!image_id) throw createHttpError(400, `ID not present in request`)
-
-  const new_properties = req.body
-
-  const image = await Image.findById(image_id)
-
-  if (!user_is_admin && user_id.toString() !== image.uploader_id) {
-    throw createHttpError(403, `Unauthorized to update image`)
-  }
-
-  await Image.updateOne({ _id: image_id }, { $set: { ...new_properties } })
-
-  console.log(`Image ${image_id} updated`)
-
-  res.send({ image_id })
-}
-
-export const delete_image = async (req: Request, res: Response) => {
-  const { user } = res.locals
-  if (!user) throw createHttpError(403, `Unauthorized to delete image`)
-
-  const user_id = user._id || user.properties._id
-  const user_is_admin = user.isAdmin || user.properties.isAdmin
-
-  const image_id = get_image_id(req)
-  if (!image_id) throw createHttpError(400, `ID not present in request`)
-
-  const image = await Image.findById(image_id)
-
-  if (!user_is_admin && user_id.toString() !== image.uploader_id) {
-    throw createHttpError(403, `Unauthorized to delete image`)
-  }
-
-  const image_folder_path = path.join(
-    uploads_directory_path,
-    image._id.toString()
-  )
-  await delete_folder(image_folder_path)
-
-  await image.remove()
-
-  console.log(`Image ${image_id} deleted`)
-
-  res.send({ image_id })
-}
-
-export const get_image_details = async (req: Request, res: Response) => {
-  const image_id = get_image_id(req)
-  if (!image_id) throw createHttpError(400, `ID not present in request`)
-
-  const image = await Image.findById(image_id)
-  if (!image) throw createHttpError(404, `Image not found in DB`)
-
-  console.log(`Details of image ${image_id} queried`)
-  res.send(image)
 }
