@@ -30,7 +30,18 @@ export const get_thumbnail_filename = (original_filename: string) => {
   return `${name}_thumbnail.jpg`
 }
 
-export const createThumbnailData = async (image_path: string) => {
-  const options = { failOnError: true }
-  return sharp(image_path, options).resize(256, 256).withMetadata()
-}
+const sharpOptions = { failOnError: true }
+export const imageVariants = [
+  {
+    name: "thumbnail",
+    filename: "thumbnail.jpg",
+    generate: async (input: string | Buffer | Uint8Array) =>
+      sharp(input, sharpOptions).resize(256, 256).withMetadata(),
+  },
+  {
+    name: "webp",
+    filename: "image.webp",
+    generate: async (input: string | Buffer | Uint8Array) =>
+      sharp(input, sharpOptions).withMetadata(),
+  },
+]

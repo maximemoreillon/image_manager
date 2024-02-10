@@ -1,6 +1,6 @@
 import Image, { ImageType } from "../models/image"
 import createHttpError from "http-errors"
-import { get_thumbnail_filename, parse_form } from "../utils"
+import { parse_form, imageVariants } from "../utils"
 import { Request, Response } from "express"
 import {
   deleteLocalImage,
@@ -101,8 +101,8 @@ export const get_image = async (req: Request, res: Response) => {
   if (!image) throw createHttpError(404, `Image not found in DB`)
   enforce_restrictions(image, res)
 
-  let filename = image.filename
-  if (variant === "thumbnail") filename = get_thumbnail_filename(filename)
+  const foundVariation = imageVariants.find(({ name }) => name === variant)
+  const filename = foundVariation?.filename
 
   if (s3Client) await streamFileFromS3(res, image, filename)
   else await sendLocalImage(res, image, filename)
@@ -153,8 +153,12 @@ export const delete_image = async (req: Request, res: Response) => {
     throw createHttpError(403, `Unauthorized to delete image`)
   }
 
-  if (s3Client) deleteFileFromS3(image)
-  else deleteLocalImage(image)
+  try {
+    if (s3Client) deleteFileFromS3(image)
+    else deleteLocalImage(image)
+  } catch (error) {
+    console.log(error)
+  }
 
   await image.remove()
 

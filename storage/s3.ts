@@ -9,8 +9,7 @@ import path from "path"
 import { Response } from "express"
 import { ImageType } from "../models/image"
 import { readFileSync } from "fs"
-import { createThumbnailData, get_thumbnail_filename } from "../utils"
-import createHttpError from "http-errors"
+import { imageVariants } from "../utils"
 
 export const {
   S3_REGION,
@@ -36,6 +35,32 @@ if (S3_BUCKET) {
   console.log(`[Storage] S3_BUCKET is NOT set, storing uploads locally`)
 }
 
+const generateVariants = async (record: ImageType) => {
+  if (!S3_BUCKET || !s3Client) throw "S3 not configured"
+
+  const options = {
+    Bucket: S3_BUCKET,
+    Key: `${record._id.toString()}/${record.filename}`,
+  }
+
+  const response = await s3Client.send(new GetObjectCommand(options))
+  const buf = await response.Body?.transformToByteArray()
+  if (!buf) throw "Failed to get Buffer"
+
+  for await (const variant of imageVariants) {
+    const variantData = await variant.generate(buf)
+    const Body = await variantData.toBuffer()
+
+    await s3Client.send(
+      new PutObjectCommand({
+        Key: `${record._id.toString()}/${variant.filename}`,
+        Bucket: S3_BUCKET,
+        Body,
+      })
+    )
+  }
+}
+
 export const storeImageToS3 = async (
   tempUploadPath: string,
   record: ImageType
@@ -44,24 +69,17 @@ export const storeImageToS3 = async (
 
   const { _id, filename } = record
 
+  const imageBuffer = readFileSync(tempUploadPath)
+
   await s3Client.send(
     new PutObjectCommand({
       Key: `${_id}/${filename}`,
       Bucket: S3_BUCKET,
-      Body: readFileSync(tempUploadPath),
+      Body: imageBuffer,
     })
   )
 
-  const thumbnailData = await createThumbnailData(tempUploadPath)
-  const thumbnailBuffer = await thumbnailData.toBuffer()
-
-  await s3Client.send(
-    new PutObjectCommand({
-      Key: `${_id}/${get_thumbnail_filename(filename)}`,
-      Bucket: S3_BUCKET,
-      Body: thumbnailBuffer,
-    })
-  )
+  await generateVariants(record)
 }
 
 export const streamFileFromS3 = async (
@@ -74,14 +92,22 @@ export const streamFileFromS3 = async (
   const filename = specifiedFilename || record.filename
   const Key = `${record._id.toString()}/${filename}`
 
+  let response
   const options = {
     Bucket: S3_BUCKET,
     Key,
   }
+  try {
+    response = await s3Client.send(new GetObjectCommand(options))
+  } catch (error) {
+    console.log(`Variant missing, regenerating files...`)
+    await generateVariants(record)
+    response = await s3Client.send(new GetObjectCommand(options))
+  }
+
+  if (!response) throw `Fetching image failed`
 
   const { base, ext } = path.parse(Key)
-
-  const response = await s3Client.send(new GetObjectCommand(options))
   if (!response.Body) throw "No Body"
   response.Body.transformToWebStream().pipeTo(
     new WritableStream({
@@ -110,8 +136,7 @@ export const deleteFileFromS3 = async (image: ImageType) => {
     new ListObjectsCommand({ Bucket: S3_BUCKET, Prefix })
   )
 
-  if (!objectList || !objectList.Contents)
-    throw createHttpError(500, `${Prefix} has no content`)
+  if (!objectList || !objectList.Contents) throw `${Prefix} has no content`
 
   for await (const { Key } of objectList.Contents) {
     const options = { Key, Bucket: S3_BUCKET }
