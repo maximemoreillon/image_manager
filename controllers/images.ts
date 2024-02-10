@@ -35,8 +35,6 @@ export const upload_image = async (req: Request, res: Response) => {
     image: { filepath: uploadTempPath, originalFilename: filename, size },
   }: any = await parse_form(req)
 
-  console.log({ fields })
-
   const imageProperties = {
     filename,
     size,
@@ -94,6 +92,7 @@ export const get_image_details = async (req: Request, res: Response) => {
 
 export const get_image = async (req: Request, res: Response) => {
   const image_id = get_image_id(req)
+  const { variant } = req.query
 
   if (!image_id) throw createHttpError(400, `Image ID not present in request`)
 
@@ -102,29 +101,16 @@ export const get_image = async (req: Request, res: Response) => {
   if (!image) throw createHttpError(404, `Image not found in DB`)
   enforce_restrictions(image, res)
 
-  if (s3Client) await streamFileFromS3(res, image)
-  else await sendLocalImage(res, image)
+  let filename = image.filename
+  if (variant === "thumbnail") filename = get_thumbnail_filename(filename)
+
+  if (s3Client) await streamFileFromS3(res, image, filename)
+  else await sendLocalImage(res, image, filename)
 
   save_views(req, image)
 }
 
-export const get_thumbnail = async (req: Request, res: Response) => {
-  const image_id = get_image_id(req)
-
-  if (!image_id) throw createHttpError(400, `Image ID not present in request`)
-
-  const image = await Image.findById(image_id)
-
-  if (!image) throw createHttpError(404, `Image not found in DB`)
-  enforce_restrictions(image, res)
-
-  const thumbnail_filename = get_thumbnail_filename(image.filename)
-
-  if (s3Client) await streamFileFromS3(res, image, thumbnail_filename)
-  else await sendLocalImage(res, image, thumbnail_filename)
-}
-
-export const update_image = async (req: Request, res: Response) => {
+export const update_image_details = async (req: Request, res: Response) => {
   const { user } = res.locals
   const image_id = req.params.id
   if (!user) throw createHttpError(403, `Unauthorized to delete image`)
