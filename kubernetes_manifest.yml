@@ -34,8 +34,8 @@ spec:
           ports:
             - containerPort: 80
           env:
-            - name: S3_BUCKET
-              value: image-manager
+            # - name: S3_BUCKET
+            #   value: image-manager
           envFrom:
             - secretRef:
                 name: environment-variables

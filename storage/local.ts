@@ -1,5 +1,4 @@
 import path from "path"
-import { uploads_directory_path } from "../folder_config"
 import { Response } from "express"
 import { rimrafSync } from "rimraf"
 import { ImageType } from "../models/image"
@@ -7,16 +6,7 @@ import { imageVariants } from "../utils"
 import { existsSync } from "fs"
 import mv from "mv"
 
-// const create_image_thumbnail = async (image_path: string) => {
-//   const folder_path = path.dirname(image_path)
-//   const image_filename = path.basename(image_path)
-//   const thumbnail_filename = get_thumbnail_filename(image_filename)
-//   const thumbnail_path = path.resolve(folder_path, thumbnail_filename)
-
-//   const thumbnailData = await createThumbnailData(image_path)
-
-//   await thumbnailData.toFile(thumbnail_path)
-// }
+export const { UPLOADS_DIRECTORY = "/usr/share/pv" } = process.env
 
 const move_file = (original_path: string, destination_path: string) =>
   new Promise((resolve, reject) => {
@@ -28,7 +18,7 @@ const move_file = (original_path: string, destination_path: string) =>
 
 const generateVariants = async (record: ImageType) => {
   const { _id, filename } = record
-  const destinationFolder = path.join(uploads_directory_path, _id.toString())
+  const destinationFolder = path.join(UPLOADS_DIRECTORY, _id.toString())
   const destinationFilePath = path.join(destinationFolder, filename)
   for await (const variant of imageVariants.filter((v) => !!v.generate)) {
     const variantData = await variant.generate(destinationFilePath)
@@ -43,7 +33,7 @@ export const saveImageLocally = async (
 ) => {
   const { _id, filename } = record
 
-  const destinationFolder = path.join(uploads_directory_path, _id.toString())
+  const destinationFolder = path.join(UPLOADS_DIRECTORY, _id.toString())
 
   const destinationFilePath = path.join(destinationFolder, filename)
   await move_file(tempUploadPath, destinationFilePath)
@@ -57,7 +47,7 @@ export const sendLocalImage = async (
   filename?: string
 ) => {
   const filePath = path.join(
-    uploads_directory_path,
+    UPLOADS_DIRECTORY,
     image._id.toString(),
     filename || image.filename
   )
@@ -73,9 +63,6 @@ export const sendLocalImage = async (
 }
 
 export const deleteLocalImage = async (record: ImageType) => {
-  const image_folder_path = path.join(
-    uploads_directory_path,
-    record._id.toString()
-  )
+  const image_folder_path = path.join(UPLOADS_DIRECTORY, record._id.toString())
   rimrafSync(image_folder_path)
 }

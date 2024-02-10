@@ -9,15 +9,6 @@ import {
 } from "../controllers/images"
 import auth from "@moreillon/express_identification_middleware"
 
-const addThumbnailVariant = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  req.query = { ...req.query, variant: "thumbnail" }
-  next()
-}
-
 const auth_options = { url: process.env.IDENTIFICATION_URL }
 const auth_options_lax = { ...auth_options, lax: true }
 
@@ -34,10 +25,8 @@ router
   .delete(auth(auth_options), delete_image)
   .patch(auth(auth_options), update_image_details)
 
-router
-  .route("/:id/thumbnail")
-  .get(auth(auth_options_lax), addThumbnailVariant, get_image)
-
 router.route("/:id/details").get(auth(auth_options), get_image_details)
+
+router.route("/:id/:variant").get(auth(auth_options_lax), get_image)
 
 export default router

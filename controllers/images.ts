@@ -92,7 +92,7 @@ export const get_image_details = async (req: Request, res: Response) => {
 
 export const get_image = async (req: Request, res: Response) => {
   const image_id = get_image_id(req)
-  const { variant } = req.query
+  const variant = req.params.variant || req.query.variant
 
   if (!image_id) throw createHttpError(400, `Image ID not present in request`)
 

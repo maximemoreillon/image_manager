@@ -30,7 +30,16 @@ describe("/images", () => {
   })
 
   describe("POST /images", () => {
-    it("Should allow posting an image", async () => {
+    it("Should not allow posting an image when logged out", async () => {
+      const { status } = await request(app)
+        .post(`/images`)
+        .field("description", "logo")
+        .attach("image", "test/example.png")
+
+      expect(status).to.equal(403)
+    })
+
+    it("Should allow posting an image when logged in", async () => {
       const { status, body } = await request(app)
         .post(`/images`)
         .field("description", "logo")
@@ -63,11 +72,19 @@ describe("/images", () => {
     })
   })
 
-  describe("GET /images/:image_id/thumbnail", () => {
+  describe("GET /images/:image_id?variant=thumbnail", () => {
     it("Should allow the query of an image thumbnail", async () => {
-      const { status, body } = await request(app)
-        .get(`/images/${image_id}/thumbnail`)
-        .set("Authorization", `Bearer ${jwt}`)
+      const { status } = await request(app).get(
+        `/images/${image_id}?variant=thumbnail`
+      )
+
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe("GET /images/:image_id/thumbnail", () => {
+    it("Should allow the query of an image thumbnail with legacy path", async () => {
+      const { status } = await request(app).get(`/images/${image_id}/thumbnail`)
 
       expect(status).to.equal(200)
     })
@@ -78,8 +95,6 @@ describe("/images", () => {
       const { status, body } = await request(app)
         .get(`/images/${image_id}/details`)
         .set("Authorization", `Bearer ${jwt}`)
-
-      console.log(body)
 
       expect(status).to.equal(200)
       expect(body.description).to.equal("logo")
