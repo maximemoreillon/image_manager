@@ -17,7 +17,7 @@ import { get_image } from "./controllers/images"
 import images_router from "./routes/images"
 import { uploads_directory_path } from "./folder_config"
 import { Request, Response, NextFunction } from "express"
-import { s3Client, S3_BUCKET } from "./storage/s3"
+import { s3Client, S3_BUCKET, S3_ENDPOINT } from "./storage/s3"
 
 const { APP_PORT = 80, IDENTIFICATION_URL } = process.env
 const promOptions = { includeMethod: true, includePath: true }
@@ -40,6 +40,7 @@ app.get("/", (req, res) => {
     storage: s3Client
       ? {
           bucket: S3_BUCKET,
+          endpoint: S3_ENDPOINT,
         }
       : {
           uploads_directory_path,
