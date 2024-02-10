@@ -3,3 +3,4 @@ uploads
 secrets.js
 .env
 build
+.nyc_output

@@ -31,17 +31,20 @@ export const get_thumbnail_filename = (original_filename: string) => {
 }
 
 const sharpOptions = { failOnError: true }
+
+type GenerateInput = any
+
 export const imageVariants = [
   {
     name: "thumbnail",
     filename: "thumbnail.jpg",
-    generate: async (input: string | Buffer | Uint8Array) =>
+    generate: async (input: GenerateInput) =>
       sharp(input, sharpOptions).resize(256, 256).withMetadata(),
   },
   {
     name: "webp",
     filename: "image.webp",
-    generate: async (input: string | Buffer | Uint8Array) =>
+    generate: async (input: GenerateInput) =>
       sharp(input, sharpOptions).withMetadata(),
   },
 ]
