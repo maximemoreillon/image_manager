@@ -100,7 +100,9 @@ export const streamFileFromS3 = async (
   try {
     response = await s3Client.send(new GetObjectCommand(options))
   } catch (error) {
-    console.log(`Variant missing, regenerating files...`)
+    console.log(
+      `One or more variant missing for image ${record._id.toString()}, regenerating files...`
+    )
     await generateVariants(record)
     response = await s3Client.send(new GetObjectCommand(options))
   }

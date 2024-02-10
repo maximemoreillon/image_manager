@@ -62,7 +62,12 @@ export const sendLocalImage = async (
     filename || image.filename
   )
 
-  if (!existsSync(filePath)) await generateVariants(image)
+  if (!existsSync(filePath)) {
+    console.log(
+      `One or more variant missing for image ${image._id.toString()}, regenerating files...`
+    )
+    await generateVariants(image)
+  }
 
   res.sendFile(filePath)
 }
