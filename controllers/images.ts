@@ -161,8 +161,8 @@ export const delete_image = async (req: Request, res: Response) => {
 
 const save_views = async (req: Request, image: ImageRecord) => {
   // Increase view count
-  if (image.views) image.views += 1
-  else image.views = 1
+  if (!image.views) image.views = 0
+  image.views++
 
   // Save last view data
   image.last_viewed = new Date()
@@ -175,11 +175,15 @@ const save_views = async (req: Request, image: ImageRecord) => {
       ({ url }: { url: string }) => url === referer_url
     )
 
-    if (found_referer) found_referer.last_request = new Date()
-    else {
+    if (found_referer) {
+      found_referer.last_request = new Date()
+      if (!found_referer.views) found_referer.views = 0
+      found_referer.views++
+    } else {
       image.referers.push({
         url: referer_url,
         last_request: new Date(),
+        views: 1,
       })
     }
   }

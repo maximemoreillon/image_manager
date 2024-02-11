@@ -20,6 +20,12 @@ export type ImageRecord = {
   save: Function
 }
 
+const refererSchema = new Schema({
+  url: String,
+  last_request: Date,
+  views: { type: Number, default: 0 },
+})
+
 const ImageSchema = new Schema<ImageRecord>({
   filename: String,
   path: String, // Legacy, renamed into filename above
@@ -34,7 +40,7 @@ const ImageSchema = new Schema<ImageRecord>({
   // Keeping track of views and origin of those views
   last_viewed: Date,
   views: { type: Number, default: 0 },
-  referers: { type: Array, default: [] },
+  referers: { type: [refererSchema], default: [] },
 })
 
 const Image = model("Image", ImageSchema)
