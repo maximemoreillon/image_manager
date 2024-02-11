@@ -14,6 +14,8 @@ import {
   streamFileFromS3,
 } from "../storage/s3"
 
+const { DEFAULT_SERVED_VARIANT } = process.env
+
 const enforce_restrictions = (image: ImageType, res: Response) => {
   if (!image.restricted) return
   const { user } = res.locals
@@ -23,9 +25,6 @@ const enforce_restrictions = (image: ImageType, res: Response) => {
     throw createHttpError(403, `Access to image ${image._id} is restricted`)
   }
 }
-
-const get_image_id = (req: Request) =>
-  req.params.id || req.params.image_id || req.query.id
 
 export const upload_image = async (req: Request, res: Response) => {
   const uploader_id = res.locals.user?._id || res.locals.user?.properties._id
@@ -91,15 +90,16 @@ export const get_image_details = async (req: Request, res: Response) => {
 
 export const get_image = async (req: Request, res: Response) => {
   const image_id = req.params.id
-  const variant = req.params.variant || req.query.variant
+  const variant =
+    req.params.variant || req.query.variant || DEFAULT_SERVED_VARIANT
 
   const image = await Image.findById(image_id)
 
   if (!image) throw createHttpError(404, `Image not found in DB`)
   enforce_restrictions(image, res)
 
-  const foundVariation = imageVariants.find(({ name }) => name === variant)
-  const filename = foundVariation?.filename
+  const foundVariant = imageVariants.find(({ name }) => name === variant)
+  const filename = foundVariant?.filename
 
   if (s3Client) await streamFileFromS3(res, image, filename)
   else await sendLocalImage(res, image, filename)

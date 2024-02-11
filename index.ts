@@ -19,7 +19,11 @@ import { Request, Response, NextFunction } from "express"
 import { s3Client, S3_BUCKET, S3_ENDPOINT } from "./storage/s3"
 import { UPLOADS_DIRECTORY } from "./storage/local"
 
-const { APP_PORT = 80, IDENTIFICATION_URL } = process.env
+const {
+  APP_PORT = 80,
+  IDENTIFICATION_URL,
+  DEFAULT_SERVED_VARIANT,
+} = process.env
 const promOptions = { includeMethod: true, includePath: true }
 
 db_connect()
@@ -46,6 +50,7 @@ app.get("/", (req, res) => {
           directory: UPLOADS_DIRECTORY,
         },
     auth: { identification_url: IDENTIFICATION_URL },
+    default_served_variant: DEFAULT_SERVED_VARIANT,
   })
 })
 

@@ -1,10 +1,3 @@
-// import {
-//   S3Client,
-//   GetObjectCommand,
-//   DeleteObjectCommand,
-//   ListObjectsCommand,
-//   PutObjectCommand,
-// } from "@aws-sdk/client-s3"
 import { Client } from "minio"
 
 import path from "path"
