@@ -1,6 +1,3 @@
-import dotenv from "dotenv"
-dotenv.config()
-
 import { version, author } from "./package.json"
 console.log(`Image manager v${version}`)
 

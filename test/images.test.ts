@@ -1,10 +1,9 @@
 import request from "supertest"
 import { expect } from "chai"
-import { app } from "../index"
 import axios from "axios"
-import dotenv from "dotenv"
+import { app } from "../index"
 
-dotenv.config()
+let jwt: string, image_id: string
 
 const {
   LOGIN_URL = "http://users/auth/login",
@@ -13,16 +12,17 @@ const {
 } = process.env
 
 const login = async () => {
-  const body = { username: TEST_USER_USERNAME, password: TEST_USER_PASSWORD }
+  const body = {
+    username: TEST_USER_USERNAME,
+    password: TEST_USER_PASSWORD,
+  }
   const {
     data: { jwt },
   } = await axios.post(LOGIN_URL, body)
   return jwt
 }
 
-describe("/images", () => {
-  let jwt: string, image_id: string
-
+describe("/images", async () => {
   before(async () => {
     // Silencing console
     //console.log = () => {}
