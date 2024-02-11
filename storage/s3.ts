@@ -153,6 +153,6 @@ export const deleteFileFromS3 = async (image: ImageRecord) => {
   })
 
   objectsStream.on("end", async () => {
-    await s3Client.removeObjects("my-bucketname", objectsList)
+    await s3Client.removeObjects(S3_BUCKET, objectsList)
   })
 }
