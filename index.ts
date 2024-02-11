@@ -16,7 +16,7 @@ import {
 import { get_image } from "./controllers/images"
 import images_router from "./routes/images"
 import { Request, Response, NextFunction } from "express"
-import { s3Client, S3_BUCKET, S3_ENDPOINT } from "./storage/s3"
+import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_USE_SSL } from "./storage/s3"
 import { UPLOADS_DIRECTORY } from "./storage/local"
 
 const {
@@ -45,6 +45,7 @@ app.get("/", (req, res) => {
       ? {
           bucket: S3_BUCKET,
           endpoint: S3_ENDPOINT,
+          useSSL: !!S3_USE_SSL,
         }
       : {
           directory: UPLOADS_DIRECTORY,
