@@ -25,11 +25,6 @@ export const parse_form = async (req: Request) =>
     })
   })
 
-export const get_thumbnail_filename = (original_filename: string) => {
-  const { name } = path.parse(original_filename)
-  return `${name}_thumbnail.jpg`
-}
-
 const sharpOptions = { failOnError: true }
 
 type GenerateInput = any

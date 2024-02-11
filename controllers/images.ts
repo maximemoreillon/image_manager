@@ -81,8 +81,7 @@ export const get_image_list = async (req: Request, res: Response) => {
 }
 
 export const get_image_details = async (req: Request, res: Response) => {
-  const image_id = get_image_id(req)
-  if (!image_id) throw createHttpError(400, `ID not present in request`)
+  const image_id = req.params.id
 
   const image = await Image.findById(image_id)
   if (!image) throw createHttpError(404, `Image not found in DB`)
@@ -91,10 +90,8 @@ export const get_image_details = async (req: Request, res: Response) => {
 }
 
 export const get_image = async (req: Request, res: Response) => {
-  const image_id = get_image_id(req)
+  const image_id = req.params.id
   const variant = req.params.variant || req.query.variant
-
-  if (!image_id) throw createHttpError(400, `Image ID not present in request`)
 
   const image = await Image.findById(image_id)
 
@@ -117,8 +114,6 @@ export const update_image_details = async (req: Request, res: Response) => {
 
   const user_id = user._id || user.properties._id
   const user_is_admin = user.isAdmin || user.properties.isAdmin
-
-  if (!image_id) throw createHttpError(400, `ID not present in request`)
 
   const new_properties = req.body
 
@@ -144,8 +139,7 @@ export const delete_image = async (req: Request, res: Response) => {
   const user_id = user._id || user.properties._id
   const user_is_admin = user.isAdmin || user.properties.isAdmin
 
-  const image_id = get_image_id(req)
-  if (!image_id) throw createHttpError(400, `ID not present in request`)
+  const image_id = req.params.id
 
   const image = await Image.findById(image_id)
 
@@ -177,7 +171,7 @@ const save_views = async (req: Request, image: ImageType) => {
   const referer_url = req.get("Referrer")
 
   if (referer_url) {
-    let found_referer = image.referers.find(
+    const found_referer = image.referers.find(
       ({ url }: { url: string }) => url === referer_url
     )
 
