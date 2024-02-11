@@ -18,7 +18,9 @@ export const {
 export let s3Client: Client
 
 if (S3_BUCKET) {
-  console.log(`[Storage] S3_BUCKET is set, uploading to "${S3_BUCKET}"`)
+  console.log(
+    `[Storage] S3_BUCKET is set, uploading to bucket "${S3_BUCKET}" of endpoint ${S3_ENDPOINT}`
+  )
   s3Client = new Client({
     accessKey: S3_ACCESS_KEY_ID,
     secretKey: S3_SECRET_ACCESS_KEY,
