@@ -1,6 +1,7 @@
-import Image, { ImageType } from "../models/image"
+import Image, { ImageRecord } from "../models/image"
 import createHttpError from "http-errors"
-import { parse_form, imageVariants } from "../utils"
+import { parse_form } from "../utils"
+import { imageVariants } from "./imageVariants"
 import { Request, Response } from "express"
 import {
   deleteLocalImage,
@@ -16,7 +17,7 @@ import {
 
 const { DEFAULT_SERVED_VARIANT } = process.env
 
-const enforce_restrictions = (image: ImageType, res: Response) => {
+const enforce_restrictions = (image: ImageRecord, res: Response) => {
   if (!image.restricted) return
   const { user } = res.locals
   const { _id: user_id, isAdmin: user_is_admin } = user
@@ -89,7 +90,7 @@ export const get_image_details = async (req: Request, res: Response) => {
 }
 
 export const get_image = async (req: Request, res: Response) => {
-  const image_id = req.params.id
+  const image_id = req.params.id || req.query.id
   const variant =
     req.params.variant || req.query.variant || DEFAULT_SERVED_VARIANT
 
@@ -99,10 +100,9 @@ export const get_image = async (req: Request, res: Response) => {
   enforce_restrictions(image, res)
 
   const foundVariant = imageVariants.find(({ name }) => name === variant)
-  const filename = foundVariant?.filename
 
-  if (s3Client) await streamFileFromS3(res, image, filename)
-  else await sendLocalImage(res, image, filename)
+  if (s3Client) await streamFileFromS3(res, image, foundVariant)
+  else await sendLocalImage(res, image, foundVariant)
 
   save_views(req, image)
 }
@@ -159,7 +159,7 @@ export const delete_image = async (req: Request, res: Response) => {
   res.send({ image_id })
 }
 
-const save_views = async (req: Request, image: ImageType) => {
+const save_views = async (req: Request, image: ImageRecord) => {
   // Increase view count
   if (image.views) image.views += 1
   else image.views = 1

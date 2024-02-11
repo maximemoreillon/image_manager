@@ -1,5 +1,3 @@
-import sharp from "sharp"
-import path from "path"
 import formidable from "formidable"
 import createHttpError from "http-errors"
 import { Request } from "express"
@@ -24,22 +22,3 @@ export const parse_form = async (req: Request) =>
       resolve({ image, fields: fieldsFormatted })
     })
   })
-
-const sharpOptions = { failOnError: true }
-
-type GenerateInput = any
-
-export const imageVariants = [
-  {
-    name: "thumbnail",
-    filename: "thumbnail.jpg",
-    generate: async (input: GenerateInput) =>
-      sharp(input, sharpOptions).resize(256, 256).withMetadata(),
-  },
-  {
-    name: "webp",
-    filename: "image.webp",
-    generate: async (input: GenerateInput) =>
-      sharp(input, sharpOptions).withMetadata(),
-  },
-]

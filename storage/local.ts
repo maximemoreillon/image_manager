@@ -1,8 +1,8 @@
 import path from "path"
 import { Response } from "express"
 import { rimrafSync } from "rimraf"
-import { ImageType } from "../models/image"
-import { imageVariants } from "../utils"
+import { ImageRecord } from "../models/image"
+import { imageVariants, type ImageVariant } from "../controllers/imageVariants"
 import { existsSync } from "fs"
 import mv from "mv"
 
@@ -16,20 +16,24 @@ const move_file = (original_path: string, destination_path: string) =>
     })
   })
 
-const generateVariants = async (record: ImageType) => {
+const generateVariant = async (record: ImageRecord, variant: ImageVariant) => {
   const { _id, filename } = record
   const destinationFolder = path.join(UPLOADS_DIRECTORY, _id.toString())
   const destinationFilePath = path.join(destinationFolder, filename)
+  const variantData = await variant.generate(destinationFilePath)
+  const variantPath = path.resolve(destinationFolder, variant.filename)
+  await variantData.toFile(variantPath)
+}
+
+const generateVariants = async (record: ImageRecord) => {
   for await (const variant of imageVariants.filter((v) => !!v.generate)) {
-    const variantData = await variant.generate(destinationFilePath)
-    const variantPath = path.resolve(destinationFolder, variant.filename)
-    await variantData.toFile(variantPath)
+    generateVariant(record, variant)
   }
 }
 
 export const saveImageLocally = async (
   tempUploadPath: string,
-  record: ImageType
+  record: ImageRecord
 ) => {
   const { _id, filename } = record
 
@@ -37,32 +41,31 @@ export const saveImageLocally = async (
 
   const destinationFilePath = path.join(destinationFolder, filename)
   await move_file(tempUploadPath, destinationFilePath)
-  await generateVariants(record)
+  // await generateVariants(record)
 }
 
-// TODO: consider using variant instead of filename
 export const sendLocalImage = async (
   res: Response,
-  image: any,
-  filename?: string
+  record: ImageRecord,
+  variant?: ImageVariant
 ) => {
-  const filePath = path.join(
-    UPLOADS_DIRECTORY,
-    image._id.toString(),
-    filename || image.filename
-  )
+  const filename = variant?.filename || record.filename
 
-  if (!existsSync(filePath)) {
+  const filePath = path.join(UPLOADS_DIRECTORY, record._id.toString(), filename)
+
+  if (variant && !existsSync(filePath)) {
     console.log(
-      `One or more variant missing for image ${image._id.toString()}, regenerating files...`
+      `Variant ${
+        variant.name
+      } missing for image ${record._id.toString()}, generating`
     )
-    await generateVariants(image)
+    await generateVariant(record, variant)
   }
 
   res.sendFile(filePath)
 }
 
-export const deleteLocalImage = async (record: ImageType) => {
+export const deleteLocalImage = async (record: ImageRecord) => {
   const image_folder_path = path.join(UPLOADS_DIRECTORY, record._id.toString())
   rimrafSync(image_folder_path)
 }

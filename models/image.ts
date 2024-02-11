@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose"
 
-export type ImageType = {
+export type ImageRecord = {
   _id: Schema.Types.ObjectId | string
   filename: string
   path: string // Legacy, renamed into filename above
@@ -20,7 +20,7 @@ export type ImageType = {
   save: Function
 }
 
-const ImageSchema = new Schema<ImageType>({
+const ImageSchema = new Schema<ImageRecord>({
   filename: String,
   path: String, // Legacy, renamed into filename above
 

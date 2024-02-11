@@ -15,9 +15,12 @@ import {
 } from "./db"
 import { get_image } from "./controllers/images"
 import images_router from "./routes/images"
+import variants_router from "./routes/imageVariants"
+
 import { Request, Response, NextFunction } from "express"
 import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_USE_SSL } from "./storage/s3"
 import { UPLOADS_DIRECTORY } from "./storage/local"
+import { ImageVariantNames } from "./controllers/imageVariants"
 
 const {
   APP_PORT = 80,
@@ -52,10 +55,12 @@ app.get("/", (req, res) => {
         },
     auth: { identification_url: IDENTIFICATION_URL },
     default_served_variant: DEFAULT_SERVED_VARIANT,
+    imageVariants: ImageVariantNames,
   })
 })
 
 app.use("/images", images_router)
+app.use("/variants", variants_router)
 
 // Legacy
 app.get("/image", get_image)

@@ -2,8 +2,8 @@ import { Client } from "minio"
 
 import path from "path"
 import { Response } from "express"
-import { ImageType } from "../models/image"
-import { imageVariants } from "../utils"
+import { ImageRecord } from "../models/image"
+import { imageVariants, type ImageVariant } from "../controllers/imageVariants"
 
 export const {
   S3_REGION,
@@ -39,7 +39,7 @@ export const stream2Buffer = (dataStream: any) =>
     dataStream.on("error", reject)
   })
 
-const generateVariants = async (record: ImageType) => {
+const getImageBuffer = async (record: ImageRecord) => {
   if (!S3_BUCKET || !s3Client) throw "S3 not configured"
 
   const stream = await s3Client.getObject(
@@ -47,25 +47,38 @@ const generateVariants = async (record: ImageType) => {
     `${record._id.toString()}/${record.filename}`
   )
 
-  const buf = await stream2Buffer(stream)
+  return stream2Buffer(stream)
+}
 
-  if (!buf) throw "Failed to get Buffer"
+const generateVariant = async (
+  record: ImageRecord,
+  variant: ImageVariant,
+  buffer?: any
+) => {
+  if (!S3_BUCKET || !s3Client) throw "S3 not configured"
+  if (!buffer) buffer = await getImageBuffer(record)
 
+  const variantData = await variant.generate(buffer)
+  const Body = await variantData.toBuffer()
+
+  await s3Client.putObject(
+    S3_BUCKET,
+    `${record._id.toString()}/${variant.filename}`,
+    Body
+  )
+}
+
+const generateVariants = async (record: ImageRecord) => {
+  if (!S3_BUCKET || !s3Client) throw "S3 not configured"
+  const buffer = await getImageBuffer(record)
   for await (const variant of imageVariants) {
-    const variantData = await variant.generate(buf)
-    const Body = await variantData.toBuffer()
-
-    await s3Client.putObject(
-      S3_BUCKET,
-      `${record._id.toString()}/${variant.filename}`,
-      Body
-    )
+    await generateVariant(record, variant, buffer)
   }
 }
 
 export const storeImageToS3 = async (
   tempUploadPath: string,
-  record: ImageType
+  record: ImageRecord
 ) => {
   if (!S3_BUCKET || !s3Client) throw "S3 not configured"
 
@@ -73,17 +86,17 @@ export const storeImageToS3 = async (
 
   await s3Client.fPutObject(S3_BUCKET, `${_id}/${filename}`, tempUploadPath)
 
-  await generateVariants(record)
+  // await generateVariants(record)
 }
 
 export const streamFileFromS3 = async (
   res: Response,
-  record: ImageType,
-  specifiedFilename?: string
+  record: ImageRecord,
+  variant?: ImageVariant
 ) => {
   if (!S3_BUCKET || !s3Client) throw "S3 not configured"
 
-  const filename = specifiedFilename || record.filename
+  const filename = variant?.filename || record.filename
   const Key = `${record._id.toString()}/${filename}`
 
   let stream
@@ -91,11 +104,15 @@ export const streamFileFromS3 = async (
   try {
     stream = await s3Client.getObject(S3_BUCKET, Key)
   } catch (error) {
-    console.log(
-      `One or more variant missing for image ${record._id.toString()}, regenerating files...`
-    )
-    await generateVariants(record)
-    stream = await s3Client.getObject(S3_BUCKET, Key)
+    if (variant) {
+      console.log(
+        `Variant ${
+          variant.name
+        } missing for image ${record._id.toString()}, generating`
+      )
+      await generateVariant(record, variant)
+      stream = await s3Client.getObject(S3_BUCKET, Key)
+    }
   }
 
   const { base, ext } = path.parse(Key)
@@ -118,7 +135,7 @@ export const streamFileFromS3 = async (
   })
 }
 
-export const deleteFileFromS3 = async (image: ImageType) => {
+export const deleteFileFromS3 = async (image: ImageRecord) => {
   if (!S3_BUCKET || !s3Client) throw "S3 not configured"
   const Prefix = image._id.toString()
 
