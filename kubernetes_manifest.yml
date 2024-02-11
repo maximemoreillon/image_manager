@@ -1,15 +1,15 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: ${APPLICATION_NAME}
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 30Gi
----
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: ${APPLICATION_NAME}
+# spec:
+#   storageClassName: manual
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 30Gi
+# ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,10 +24,10 @@ spec:
       labels:
         app: ${APPLICATION_NAME}
     spec:
-      volumes:
-        - name: ${APPLICATION_NAME}
-          persistentVolumeClaim:
-            claimName: ${APPLICATION_NAME}
+      # volumes:
+      #   - name: ${APPLICATION_NAME}
+      #     persistentVolumeClaim:
+      #       claimName: ${APPLICATION_NAME}
       containers:
         - name: ${APPLICATION_NAME}
           image: ${CONTAINER_IMAGE_TAGGED}
@@ -39,9 +39,9 @@ spec:
           envFrom:
             - secretRef:
                 name: environment-variables
-          volumeMounts:
-            - mountPath: /usr/share/pv
-              name: ${APPLICATION_NAME}
+          # volumeMounts:
+          #   - mountPath: /usr/share/pv
+          #     name: ${APPLICATION_NAME}
 ---
 apiVersion: v1
 kind: Service
