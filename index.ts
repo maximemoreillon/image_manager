@@ -45,7 +45,7 @@ app.get("/", (req, res) => {
       ? {
           bucket: S3_BUCKET,
           endpoint: S3_ENDPOINT,
-          useSSL: !!S3_USE_SSL,
+          useSSL: S3_USE_SSL,
         }
       : {
           directory: UPLOADS_DIRECTORY,
