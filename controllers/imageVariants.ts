@@ -1,6 +1,8 @@
 import { Request, Response } from "express"
 import sharp from "sharp"
 
+export const { DEFAULT_SERVED_VARIANT = "original" } = process.env
+
 const sharpOptions = { failOnError: true }
 
 type GenerateInput = any
@@ -36,5 +38,5 @@ export type ImageVariant = (typeof imageVariants)[0]
 export const ImageVariantNames = imageVariants.map(({ name }) => name)
 
 export const readImageVariants = async (req: Request, res: Response) => {
-  res.send(ImageVariantNames)
+  res.send({ default: DEFAULT_SERVED_VARIANT, available: ImageVariantNames })
 }

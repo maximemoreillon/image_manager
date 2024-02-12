@@ -24,10 +24,6 @@ spec:
       labels:
         app: ${APPLICATION_NAME}
     spec:
-      # volumes:
-      #   - name: ${APPLICATION_NAME}
-      #     persistentVolumeClaim:
-      #       claimName: ${APPLICATION_NAME}
       containers:
         - name: ${APPLICATION_NAME}
           image: ${CONTAINER_IMAGE_TAGGED}
@@ -36,12 +32,11 @@ spec:
           env:
             - name: S3_BUCKET
               value: image-manager
+            - name: DEFAULT_SERVED_VARIANT
+              value: max_1920_1080
           envFrom:
             - secretRef:
                 name: environment-variables
-          # volumeMounts:
-          #   - mountPath: /usr/share/pv
-          #     name: ${APPLICATION_NAME}
 ---
 apiVersion: v1
 kind: Service

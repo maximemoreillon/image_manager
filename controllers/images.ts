@@ -14,8 +14,7 @@ import {
   storeImageToS3,
   streamFileFromS3,
 } from "../storage/s3"
-
-const { DEFAULT_SERVED_VARIANT } = process.env
+import { DEFAULT_SERVED_VARIANT } from "./imageVariants"
 
 const enforce_restrictions = (image: ImageRecord, res: Response) => {
   if (!image.restricted) return
@@ -100,6 +99,7 @@ export const get_image = async (req: Request, res: Response) => {
   enforce_restrictions(image, res)
 
   const foundVariant = imageVariants.find(({ name }) => name === variant)
+  // If no found variant, serve the original image
 
   if (s3Client) await streamFileFromS3(res, image, foundVariant)
   else await sendLocalImage(res, image, foundVariant)
