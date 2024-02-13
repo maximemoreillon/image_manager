@@ -10,7 +10,7 @@ type GenerateInput = any
 export const imageVariants = [
   {
     name: "thumbnail",
-    filename: "thumbnail.jpg",
+    filename: "thumbnail.png",
     generate: async (input: GenerateInput) =>
       sharp(input, sharpOptions).withMetadata().resize(256, 256),
   },
@@ -22,7 +22,7 @@ export const imageVariants = [
   },
   {
     name: "max_1920_1080",
-    filename: "max_1920_1080.jpg",
+    filename: "max_1920_1080.png",
     generate: async (input: GenerateInput) =>
       sharp(input, sharpOptions).withMetadata().resize({
         width: 1920,
