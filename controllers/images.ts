@@ -52,9 +52,9 @@ export const upload_image = async (req: Request, res: Response) => {
 
 export const get_image_list = async (req: Request, res: Response) => {
   const {
-    skip = 0,
-    limit = 50,
-    order = -1,
+    skip = "0",
+    limit = "50",
+    order = "-1",
     sort = "upload_date",
     search,
   }: any = req.query
@@ -69,7 +69,7 @@ export const get_image_list = async (req: Request, res: Response) => {
 
   const items = await Image.find(query)
     .skip(Number(skip))
-    .sort({ [sort]: order })
+    .sort({ [sort]: order, filename: 1 })
     .limit(Math.max(Number(limit), 0))
 
   const total = await Image.countDocuments(query)
