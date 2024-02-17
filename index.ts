@@ -1,7 +1,7 @@
 import { version, author } from "./package.json"
 console.log(`Image manager v${version}`)
 
-import express from "express"
+import express, { Request, Response, NextFunction } from "express"
 import "express-async-errors"
 import cors from "cors"
 import promBundle from "express-prom-bundle"
@@ -13,8 +13,8 @@ import {
 import { get_image } from "./controllers/images"
 import images_router from "./routes/images"
 import variants_router from "./routes/imageVariants"
-
-import { Request, Response, NextFunction } from "express"
+import swaggerUi from "swagger-ui-express"
+import swaggerDocument from "./swagger-output.json"
 import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_USE_SSL } from "./storage/s3"
 import { UPLOADS_DIRECTORY } from "./storage/local"
 import { ImageVariantNames } from "./controllers/imageVariants"
@@ -32,6 +32,7 @@ export const app = express()
 app.use(express.json())
 app.use(cors())
 app.use(promBundle(promOptions))
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.get("/", (req, res) => {
   res.send({
     application_name: "Image manager API",
