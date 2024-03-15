@@ -18,6 +18,7 @@ import swaggerDocument from "./swagger-output.json"
 import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_USE_SSL } from "./storage/s3"
 import { UPLOADS_DIRECTORY } from "./storage/local"
 import { ImageVariantNames } from "./controllers/imageVariants"
+import { REDIS_URL, init as cacheInit } from "./cache"
 
 const {
   APP_PORT = 80,
@@ -27,6 +28,7 @@ const {
 const promOptions = { includeMethod: true, includePath: true }
 
 db_connect()
+cacheInit()
 
 export const app = express()
 app.use(express.json())
@@ -51,6 +53,9 @@ app.get("/", (req, res) => {
       : {
           directory: UPLOADS_DIRECTORY,
         },
+    cache: {
+      url: REDIS_URL,
+    },
     auth: { identification_url: IDENTIFICATION_URL },
     default_served_variant: DEFAULT_SERVED_VARIANT,
     imageVariants: ImageVariantNames,

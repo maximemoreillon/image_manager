@@ -29,6 +29,7 @@
     "mongoose": "^5.13.14",
     "mv": "^2.1.1",
     "prom-client": "^15.0.0",
+    "redis": "^4.6.13",
     "rimraf": "^5.0.5",
     "sharp": "^0.30.3",
     "swagger-autogen": "^2.23.7",

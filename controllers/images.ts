@@ -15,6 +15,11 @@ import {
   streamFileFromS3,
 } from "../storage/s3"
 import { DEFAULT_SERVED_VARIANT } from "./imageVariants"
+import {
+  getImageRecordFromCache,
+  removeImageRecordFromCache,
+  setImageRecordInCache,
+} from "../cache"
 
 const enforce_restrictions = (image: ImageRecord, res: Response) => {
   if (!image.restricted) return
@@ -89,13 +94,18 @@ export const get_image_details = async (req: Request, res: Response) => {
 }
 
 export const get_image = async (req: Request, res: Response) => {
-  const image_id = req.params.id || req.query.id
+  const image_id = req.params.id || (req.query.id as string)
   const variant =
     req.params.variant || req.query.variant || DEFAULT_SERVED_VARIANT
 
-  const image = await Image.findById(image_id)
+  let image = await getImageRecordFromCache(image_id)
 
-  if (!image) throw createHttpError(404, `Image not found in DB`)
+  if (!image) {
+    image = await Image.findById(image_id)
+    if (!image) throw createHttpError(404, `Image not found in DB`)
+    setImageRecordInCache(image)
+  }
+
   enforce_restrictions(image, res)
 
   const foundVariant = imageVariants.find(({ name }) => name === variant)
@@ -104,7 +114,7 @@ export const get_image = async (req: Request, res: Response) => {
   if (s3Client) await streamFileFromS3(res, image, foundVariant)
   else await sendLocalImage(res, image, foundVariant)
 
-  save_views(req, image)
+  save_views(req, image_id)
 }
 
 export const update_image_details = async (req: Request, res: Response) => {
@@ -118,17 +128,20 @@ export const update_image_details = async (req: Request, res: Response) => {
   const new_properties = req.body
 
   const image = await Image.findById(image_id)
+  if (!image) throw createHttpError(404, `Image ${image_id} not found`)
 
   if (!user_is_admin && user_id.toString() !== image.uploader_id) {
     throw createHttpError(403, `Unauthorized to update image`)
   }
 
+  // TODO: No need for another query, just use Image.save()
   const updatedImage = await Image.findOneAndUpdate(
     { _id: image_id },
     { $set: { ...new_properties } },
     { new: true }
   )
 
+  removeImageRecordFromCache(updatedImage._id)
   res.send(updatedImage)
 }
 
@@ -142,6 +155,7 @@ export const delete_image = async (req: Request, res: Response) => {
   const image_id = req.params.id
 
   const image = await Image.findById(image_id)
+  if (!image) throw createHttpError(404, `Image ${image_id} not found`)
 
   if (!user_is_admin && user_id.toString() !== image.uploader_id) {
     throw createHttpError(403, `Unauthorized to delete image`)
@@ -155,38 +169,46 @@ export const delete_image = async (req: Request, res: Response) => {
   }
 
   await image.remove()
+  removeImageRecordFromCache(image._id)
 
   res.send({ image_id })
 }
 
-const save_views = async (req: Request, image: ImageRecord) => {
-  // Increase view count
-  if (!image.views) image.views = 0
-  image.views++
+const save_views = async (req: Request, imageId: string) => {
+  try {
+    const image: ImageRecord = await Image.findById(imageId)
 
-  // Save last view data
-  image.last_viewed = new Date()
+    // Increase view count
+    if (!image.views) image.views = 0
+    image.views++
 
-  // save referer
-  const referer_url = req.get("Referrer")
+    // Save last view data
+    image.last_viewed = new Date()
 
-  if (referer_url) {
-    const found_referer = image.referers.find(
-      ({ url }: { url: string }) => url === referer_url
-    )
+    // save referer
+    const referer_url = req.get("Referrer")
 
-    if (found_referer) {
-      found_referer.last_request = new Date()
-      if (!found_referer.views) found_referer.views = 0
-      found_referer.views++
-    } else {
-      image.referers.push({
-        url: referer_url,
-        last_request: new Date(),
-        views: 1,
-      })
+    if (referer_url) {
+      const found_referer = image.referers.find(
+        ({ url }: { url: string }) => url === referer_url
+      )
+
+      if (found_referer) {
+        found_referer.last_request = new Date()
+        if (!found_referer.views) found_referer.views = 0
+        found_referer.views++
+      } else {
+        image.referers.push({
+          url: referer_url,
+          last_request: new Date(),
+          views: 1,
+        })
+      }
     }
-  }
 
-  await image.save()
+    await image.save()
+  } catch (error) {
+    console.log(`Failed to update view count for image ${imageId}`)
+    console.log(error)
+  }
 }
