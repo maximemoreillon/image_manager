@@ -1,6 +1,6 @@
 import Image, { ImageRecord } from "../models/image"
 import createHttpError from "http-errors"
-import { parse_form } from "../utils"
+import { parse_form, enforce_restrictions } from "../utils"
 import { imageVariants } from "./imageVariants"
 import { Request, Response } from "express"
 import {
@@ -20,16 +20,6 @@ import {
   removeImageRecordFromCache,
   setImageRecordInCache,
 } from "../cache"
-
-const enforce_restrictions = (image: ImageRecord, res: Response) => {
-  if (!image.restricted) return
-  const { user } = res.locals
-  const { _id: user_id, isAdmin: user_is_admin } = user
-
-  if (!user || (!user_is_admin && user_id.toString() !== image.uploader_id)) {
-    throw createHttpError(403, `Access to image ${image._id} is restricted`)
-  }
-}
 
 export const upload_image = async (req: Request, res: Response) => {
   const uploader_id = res.locals.user?._id || res.locals.user?.properties._id
@@ -128,13 +118,12 @@ export const update_image_details = async (req: Request, res: Response) => {
   const new_properties = req.body
 
   const image = await Image.findById(image_id)
-  if (!image) throw createHttpError(404, `Image ${image_id} not found`)
 
+  if (!image) throw createHttpError(404, `Image ${image_id} not found`)
   if (!user_is_admin && user_id.toString() !== image.uploader_id) {
     throw createHttpError(403, `Unauthorized to update image`)
   }
 
-  // TODO: No need for another query, just use Image.save()
   const updatedImage = await Image.findOneAndUpdate(
     { _id: image_id },
     { $set: { ...new_properties } },

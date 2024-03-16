@@ -6,12 +6,9 @@ export const { REDIS_URL } = process.env
 let client: RedisClientType
 
 export const init = async () => {
-  if (!REDIS_URL) {
-    console.log(`[Cache] REDIS_URL not set, skipping`)
-    return
-  }
+  if (!REDIS_URL) return
 
-  console.log(`[Cache] Using redis at ${REDIS_URL}`)
+  console.log(`[Cache] Using Redis at ${REDIS_URL}`)
 
   client = createClient({ url: REDIS_URL })
 

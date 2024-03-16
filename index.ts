@@ -8,7 +8,7 @@ import promBundle from "express-prom-bundle"
 import {
   get_connected,
   redactedConnectionString as dbConnectionString,
-  connect as db_connect,
+  connect as dbConnect,
 } from "./db"
 import { get_image } from "./controllers/images"
 import images_router from "./routes/images"
@@ -27,7 +27,7 @@ const {
 } = process.env
 const promOptions = { includeMethod: true, includePath: true }
 
-db_connect()
+dbConnect()
 cacheInit()
 
 export const app = express()
