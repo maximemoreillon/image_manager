@@ -30,3 +30,11 @@ More details about the design of the service available on the [project page](htt
 | LOGIN_URL                 | URL for login, used for TDD             |
 | TEST_USER_USERNAME        | Username for TDD                        |
 | TEST_USER_PASSWORD        | Password for TDD                        |
+| REDIS_URL                 | URL of the Redis cache                  |
+| S3_ACCESS_KEY_ID          | S3 access key ID                        |
+| S3_SECRET_ACCESS_KEY      | S3 secret access key                    |
+| S3_ENDPOINT               | Custom S3 endpoint                      |
+| S3_REGION                 | S3 Region                               |
+| S3_PORT                   | S3 port                                 |
+| S3_USE_SSL                | Use SSL for communication with S3       |
+| S3_BUCKET                 | S3 Bucket                               |
