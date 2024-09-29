@@ -13,13 +13,14 @@ const { strictAuth, laxAuth } = getAuthMiddlewares()
 
 const router = express.Router()
 
-router.route("/:id").get(get_image)
-router.route("/:id/:variant").get(laxAuth, get_image)
+router.route("/").get(strictAuth, get_image_list).post(strictAuth, upload_image)
+router
+  .route("/:id")
+  .get(laxAuth, get_image)
+  .delete(strictAuth, delete_image)
+  .patch(strictAuth, update_image_details)
 
-// Protected routes from here
-router.use(strictAuth)
-router.route("/").get(get_image_list).post(upload_image)
-router.route("/:id").delete(delete_image).patch(update_image_details)
-router.route("/:id/details").get(get_image_details)
+router.route("/:id/details").get(strictAuth, get_image_details)
+router.route("/:id/:variant").get(laxAuth, get_image)
 
 export default router

@@ -25,7 +25,7 @@ export const upload_image = async (req: Request, res: Response) => {
   const uploader_id = getUserId(res)
 
   const {
-    fields,
+    fields: { description, restricted },
     image: { filepath: uploadTempPath, originalFilename: filename, size },
   }: any = await parse_form(req)
 
@@ -34,8 +34,11 @@ export const upload_image = async (req: Request, res: Response) => {
     size,
     upload_date: new Date(),
     uploader_id,
-    ...fields,
+    description,
+    restricted,
   }
+
+  console.log(description)
 
   const record = await Image.create(imageProperties)
 
