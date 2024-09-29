@@ -19,12 +19,9 @@ import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_USE_SSL } from "./storage/s3"
 import { UPLOADS_DIRECTORY } from "./storage/local"
 import { ImageVariantNames } from "./controllers/imageVariants"
 import { REDIS_URL, init as cacheInit } from "./cache"
+import { OIDC_JWKS_URI, IDENTIFICATION_URL } from "./auth"
+const { APP_PORT = 80, DEFAULT_SERVED_VARIANT } = process.env
 
-const {
-  APP_PORT = 80,
-  IDENTIFICATION_URL,
-  DEFAULT_SERVED_VARIANT,
-} = process.env
 const promOptions = { includeMethod: true, includePath: true }
 
 dbConnect()
@@ -56,7 +53,10 @@ app.get("/", (req, res) => {
     cache: {
       url: REDIS_URL,
     },
-    auth: { identification_url: IDENTIFICATION_URL },
+    auth: {
+      identification_url: IDENTIFICATION_URL,
+      oidc_jwks_uri: OIDC_JWKS_URI,
+    },
     default_served_variant: DEFAULT_SERVED_VARIANT,
     imageVariants: ImageVariantNames,
   })
