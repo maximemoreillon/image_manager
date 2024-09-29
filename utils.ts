@@ -2,6 +2,7 @@ import formidable from "formidable"
 import createHttpError from "http-errors"
 import { Request, Response } from "express"
 import { ImageRecord } from "./models/image"
+
 export const parse_form = async (req: Request) =>
   new Promise((resolve, reject) => {
     const form = formidable({})
@@ -26,9 +27,17 @@ export const parse_form = async (req: Request) =>
 export const enforce_restrictions = (image: ImageRecord, res: Response) => {
   if (!image.restricted) return
   const { user } = res.locals
-  const { _id: user_id, isAdmin: user_is_admin } = user
+  const user_id = getUserId(res)
 
-  if (!user || (!user_is_admin && user_id.toString() !== image.uploader_id)) {
+  if (
+    !user ||
+    (!user.user_is_admin && user_id.toString() !== image.uploader_id)
+  ) {
     throw createHttpError(403, `Access to image ${image._id} is restricted`)
   }
+}
+
+export const getUserId = (res: Response) => {
+  const { user } = res.locals
+  return user?.legacy_id ?? user?._id ?? user?._properties?._id
 }

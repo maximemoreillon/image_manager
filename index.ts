@@ -64,9 +64,7 @@ app.get("/", (req, res) => {
 
 app.use("/images", images_router)
 app.use("/variants", variants_router)
-
-// Legacy
-app.get("/image", get_image)
+app.get("/image", get_image) // Legacy
 
 // Express error handler
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {

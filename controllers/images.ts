@@ -1,6 +1,6 @@
 import Image, { ImageRecord } from "../models/image"
 import createHttpError from "http-errors"
-import { parse_form, enforce_restrictions } from "../utils"
+import { parse_form, enforce_restrictions, getUserId } from "../utils"
 import { imageVariants } from "./imageVariants"
 import { Request, Response } from "express"
 import {
@@ -22,7 +22,7 @@ import {
 } from "../cache"
 
 export const upload_image = async (req: Request, res: Response) => {
-  const uploader_id = res.locals.user?._id || res.locals.user?.properties._id
+  const uploader_id = getUserId(res)
 
   const {
     fields,
@@ -77,6 +77,8 @@ export const get_image_list = async (req: Request, res: Response) => {
 export const get_image_details = async (req: Request, res: Response) => {
   const image_id = req.params.id
 
+  // TODO: auth
+
   const image = await Image.findById(image_id)
   if (!image) throw createHttpError(404, `Image not found in DB`)
 
@@ -112,7 +114,8 @@ export const update_image_details = async (req: Request, res: Response) => {
   const image_id = req.params.id
   if (!user) throw createHttpError(403, `Unauthorized to delete image`)
 
-  const user_id = user._id || user.properties._id
+  const user_id = getUserId(res)
+
   const user_is_admin = user.isAdmin || user.properties.isAdmin
 
   const new_properties = req.body
@@ -138,7 +141,7 @@ export const delete_image = async (req: Request, res: Response) => {
   const { user } = res.locals
   if (!user) throw createHttpError(403, `Unauthorized to delete image`)
 
-  const user_id = user._id || user.properties._id
+  const user_id = getUserId(res)
   const user_is_admin = user.isAdmin || user.properties.isAdmin
 
   const image_id = req.params.id
