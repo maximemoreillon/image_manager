@@ -20,6 +20,10 @@ import { UPLOADS_DIRECTORY } from "./storage/local"
 import { ImageVariantNames } from "./controllers/imageVariants"
 import { REDIS_URL, init as cacheInit } from "./cache"
 import { OIDC_JWKS_URI, IDENTIFICATION_URL } from "./auth"
+import { getAuthMiddlewares } from "./auth"
+
+const { laxAuth } = getAuthMiddlewares()
+
 const { APP_PORT = 80, DEFAULT_SERVED_VARIANT } = process.env
 
 const promOptions = { includeMethod: true, includePath: true }
@@ -64,7 +68,7 @@ app.get("/", (req, res) => {
 
 app.use("/images", images_router)
 app.use("/variants", variants_router)
-app.get("/image", get_image) // Legacy
+app.get("/image", laxAuth, get_image) // Legacy
 
 // Express error handler
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
