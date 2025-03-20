@@ -9,7 +9,7 @@
     "start": "node ./build/index.js",
     "test": "mocha -r dotenv/config -r ts-node/register test/*test.ts --timeout 15000 --exit",
     "test-local": "S3_BUCKET= npm run test",
-    "test-s3": "S3_BUCKET=moreillon-test npm run test",
+    "test-s3": "npm run test",
     "test-all": "npm run test-local && npm run test-s3",
     "coverage": "nyc npm run test-all --exit",
     "swagger-autogen": "ts-node swagger.ts"
