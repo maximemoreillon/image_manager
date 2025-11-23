@@ -10,7 +10,6 @@ variables:
   CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
   CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:latest
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_TAG}
-  K8S_INGRESS_HOST: img.maximemoreillon.com
 
 image: moreillon/ci-dind
 services:
@@ -20,8 +19,6 @@ build:
   stage: build
   only:
     - tags
-  tags:
-    - dind
   before_script:
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
   script:
@@ -33,8 +30,6 @@ test:
   only:
     - tags
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
-  tags:
-    - dind
   before_script:
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
     # Creating network for TDD
@@ -85,8 +80,6 @@ release:
   stage: release
   only:
     - tags
-  tags:
-    - dind
   before_script:
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
   script:
@@ -100,8 +93,6 @@ deploy:
   stage: deploy
   only:
     - tags
-  tags:
-    - dind
   before_script:
     - kubectl config use-context moreillon_ci/moreillon_k8s/kubernetes-agent:cloud
   script:

@@ -46,10 +46,21 @@ metadata:
 spec:
   tls:
     - hosts:
-        - ${K8S_INGRESS_HOST}
+        - img.maximemoreillon.com
+        - api.images.maximemoreillon.com
       secretName: ${APPLICATION_NAME}-tls
   rules:
-    - host: ${K8S_INGRESS_HOST}
+    - host: img.maximemoreillon.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ${APPLICATION_NAME}
+                port:
+                  number: 80
+    - host: api.images.maximemoreillon.com
       http:
         paths:
           - path: /
